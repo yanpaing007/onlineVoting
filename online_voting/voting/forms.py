@@ -49,9 +49,8 @@ class RegisterForm(UserCreationForm):
     password2 = forms.CharField(label='Confirm Password', widget=forms.PasswordInput(attrs={'class': 'form-control'}))
 
     class Meta:
-        model = Profile
+        model = User
         fields = ['username', 'email', 'name', 'password1', 'password2']
-
 
 class CustomAuthenticationForm(AuthenticationForm):
     username = forms.CharField(

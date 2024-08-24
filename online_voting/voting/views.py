@@ -124,9 +124,10 @@ def vote_result(request, event_id):
 # See events by filtering them
 def event_list(request):
     now = timezone.now()
-    ongoing_events = VotingEvent.objects.filter(start_time__lte=now, end_time__gte=now)
-    upcoming_events = VotingEvent.objects.filter(start_time__gt=now)
-    previous_events = VotingEvent.objects.filter(end_time__lt=now)
+    all_events = VotingEvent.objects.filter(is_private=False)
+    ongoing_events = all_events.filter(start_time__lte=now, end_time__gte=now)
+    upcoming_events = all_events.filter(start_time__gt=now)
+    previous_events = all_events.filter(end_time__lt=now)
 
     categories = Category.objects.all()
 
