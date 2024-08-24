@@ -19,6 +19,20 @@ from .forms import (
     Profile,
 )
 
+#Return current status of Event.
+def event_status(event):
+    now = timezone.now()
+    ongoing = event.start_time__lte=now and event.end_time__gte=now
+    upcoming = event.start_time__gt=now
+    previous = event.end_time__lt=now
+    if ongoing:
+        return ongoing
+    elif upcoming:
+        return upcoming
+    elif previous:
+        return previous
+    
+    return None
 
 # Generate a unique token for private events
 def generate_unique_token():
@@ -38,7 +52,7 @@ def create_event(request):
         if event_form.is_valid() and candidate_formset.is_valid():
             voting_event = event_form.save(commit=False)
             voting_event.created_by = request.user
-            if voting_event.is_private:
+            if voting_event.is_private:        
                 voting_event.event_token = generate_unique_token()
             voting_event.save()
             selected_categories = event_form.cleaned_data["categories"]
@@ -47,7 +61,7 @@ def create_event(request):
                 candidate = form.save(commit=False)
                 candidate.voting_event = voting_event
                 candidate.save()
-            return redirect("voting:event_detail", event_id=voting_event.id)
+            return redirect("voting:event_detail", event_id=voting_event.id, event_token=voting_event.event_token)
     else:
         event_form = VotingEventForm()
         candidate_formset = CandidateFormSet(queryset=Candidate.objects.none())
@@ -64,17 +78,17 @@ def create_event(request):
 
 # View event details
 @login_required()
-def event_detail(request, event_id):
+def event_detail(request, event_id, event_token):
     voting_event = get_object_or_404(VotingEvent, id=event_id)
     candidates = voting_event.candidates.all()
     user_vote = Vote.objects.filter(voting_event=voting_event,voter= request.user).first()
     voted_candidate = user_vote.candidate if user_vote else None
-    now = timezone.now()
+    status = event_status(voting_event)
     
     return render(
         request,
         "voting/event_detail.html",
-        {"event": voting_event, "candidates": candidates, "voted_candidate": voted_candidate, "now": now},
+        {"event": voting_event, "candidates": candidates, "voted_candidate": voted_candidate, "status": status},
     )
 
 
@@ -109,11 +123,10 @@ def vote(request, event_id):
 def vote_result(request, event_id):
     voting_event = get_object_or_404(VotingEvent, id=event_id)
     candidates = voting_event.candidates.all()
-    now = timezone.now()
     return render(
         request,
         "voting/vote_result.html",
-        {"event": voting_event, "candidates": candidates, "now": now},
+        {"event": voting_event, "candidates": candidates, "status": event_status(voting_event)},
     )
 
 

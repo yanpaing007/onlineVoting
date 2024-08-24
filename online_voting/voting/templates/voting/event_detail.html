@@ -16,10 +16,11 @@
 {% endif %}
  
 <h2>{{ event.event_name }}</h2>
-<p><strong>Event Token:</strong> {{ event.event_token }}</p>
-<p>
-    <strong>Event Duration:</strong> {{ event.start_time }} to {{ event.end_time}}
-</p>
+
+{% if status != 'previous' %}
+<p><strong>Event Status:</strong> {{status}}</p>
+{% else %}
+<p><strong>Event Status:</strong> <p class="text-danger"> This event is already ended.</p></p>
  
 <h3>Candidates:</h3>
 <form action="{% url 'voting:vote' event.id %}" method="post">
@@ -56,17 +57,17 @@
         <input type="checkbox" class="form-check-input" id="anonymousVote" name="anonymousVote" {% if voted_candidate%}checked{% endif %}>
         <label class="form-check-label" for="anonymousVote">Vote anonymously</label>
     </div>
-    {% if event.start_time > now %}
-    <button type="submit" class="btn btn-primary mt-4 disabled">Cast Your Vote</button>
-    <a href="{% url 'voting:vote_result' event_id=event.id %}">
-        <button type="button" class="btn btn-success mt-4 disabled">View Result</button>
-    </a>
-    {% elif now > event.start_time and event.end_time > now %}
+    {% if status == 'ongoing' %}
     <button type="submit" class="btn btn-primary mt-4">Cast Your Vote</button>
     <a href="{% url 'voting:vote_result' event_id=event.id %}">
         <button type="button" class="btn btn-success mt-4">View Result</button>
     </a>
-    {% else %}
+    {% elif status == 'upcoming' %}
+    <button type="submit" class="btn btn-primary mt-4 disabled">Cast Your Vote</button>
+    <a href="{% url 'voting:vote_result' event_id=event.id %}">
+        <button type="button" class="btn btn-success mt-4 disabled">View Result</button>
+    </a>
+    {% elif status == 'previous' %}
     <button type="submit" class="btn btn-primary mt-4 disabled">Cast Your Vote</button>
     <a href="{% url 'voting:vote_result' event_id=event.id %}">
         <button type="button" class="btn btn-success mt-4">View Result</button>
