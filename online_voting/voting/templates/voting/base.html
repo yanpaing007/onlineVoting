@@ -22,6 +22,18 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <form class="d-flex" role="search" action="{% url 'voting:search_events' %}" method="GET">
+                                <input 
+                                    type="search" 
+                                    class="form-control rounded-pill" 
+                                    placeholder="Search" 
+                                    aria-label="Search" 
+                                    name="query"
+                                    value="{{ query }}"
+                                    style="border-radius: 0px;">
+                            </form>
+                        </li>
                         {% if user.is_authenticated %}
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'voting:create_event' %}">Create Event</a>

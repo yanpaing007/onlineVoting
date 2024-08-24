@@ -40,8 +40,6 @@ def create_event(request):
             voting_event.created_by = request.user
             if voting_event.is_private:
                 voting_event.event_token = generate_unique_token()
-            else:
-                voting_event.event_token = "0000"
             voting_event.save()
             selected_categories = event_form.cleaned_data["categories"]
             voting_event.categories.set(selected_categories)
@@ -71,11 +69,12 @@ def event_detail(request, event_id):
     candidates = voting_event.candidates.all()
     user_vote = Vote.objects.filter(voting_event=voting_event,voter= request.user).first()
     voted_candidate = user_vote.candidate if user_vote else None
+    now = timezone.now()
     
     return render(
         request,
         "voting/event_detail.html",
-        {"event": voting_event, "candidates": candidates, "voted_candidate": voted_candidate},
+        {"event": voting_event, "candidates": candidates, "voted_candidate": voted_candidate, "now": now},
     )
 
 
@@ -91,12 +90,14 @@ def vote(request, event_id):
 
     if request.method == "POST":
         candidate_id = request.POST.get("candidate")
+        anonymous_vote = request.POST.get("anonymousVote")
+
         if candidate_id:
             candidate = get_object_or_404(Candidate, pk=candidate_id)
             # Save the vote with the voter information
             vote = Vote(candidate=candidate, voting_event=event, voter=request.user)
-            if vote.is_anonymous:
-                vote.voter.username = "Anonymous"
+            if anonymous_vote =="on":
+                vote.is_anonymous=True
             vote.save()
             messages.success(request, "Your vote has been cast successfully!")
             return redirect("voting:vote_result", event_id=event.id)
@@ -239,3 +240,14 @@ def event_by_category(request, cate):
         "voting/event_list.html",
         {"events": events, "selected_category": category},
     )
+
+def search_events(request):
+    query = request.GET.get('query')
+    print(query)
+    results = []
+    if query and len(query) >= 3:
+        results = VotingEvent.objects.filter(event_name__icontains=query)
+    else:
+        messages.error(request, "Invalid input")
+    print(results)
+    return render(request, 'voting/search_results.html', {'results': results, 'query': query})

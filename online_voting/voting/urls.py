@@ -14,4 +14,5 @@ urlpatterns = [
     path('event/myevents', views.my_events, name='my_events'),
     path('event/<str:cate>', views.event_by_category, name='sort_by_category'),
     path('profile/', views.profile, name='profile'),
+    path('event/search/', views.search_events, name="search_events"),
 ]
