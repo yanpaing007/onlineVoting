@@ -20,4 +20,4 @@ db.sqlite3-journal
 media/
 staticfiles/
 .env
-.DS_Store
+.DS_Store=
