@@ -70,8 +70,7 @@ def event_detail(request, event_id):
     voting_event = get_object_or_404(VotingEvent, id=event_id)
     candidates = voting_event.candidates.all()
     user_vote = Vote.objects.filter(voting_event=voting_event,voter= request.user).first()
-    voted_candidate =user_vote.candidate if user_vote else None
-    
+    voted_candidate = user_vote.candidate if user_vote else None
     
     return render(
         request,
@@ -94,14 +93,10 @@ def vote(request, event_id):
         candidate_id = request.POST.get("candidate")
         if candidate_id:
             candidate = get_object_or_404(Candidate, pk=candidate_id)
-
             # Save the vote with the voter information
             vote = Vote(candidate=candidate, voting_event=event, voter=request.user)
-
-            # Set the vote as anonymous if the event is private
-            if event.is_private:
-                vote.is_anonymous = True
-
+            if vote.is_anonymous:
+                vote.voter.username = "Anonymous"
             vote.save()
             messages.success(request, "Your vote has been cast successfully!")
             return redirect("voting:vote_result", event_id=event.id)
