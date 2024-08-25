@@ -1,0 +1,50 @@
+<!-- templates/voting/create_event.html -->
+{% extends 'voting/base.html' %}
+
+{% block title %}Create Event{% endblock %}
+
+{% block content %}
+<h2>Create New Event</h2>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ event_form.as_p }}
+
+    <h3>Candidates</h3>
+    {{ candidate_formset.management_form }}
+        <div id="candidate-forms">
+        <!--{% for form in candidate_formset %}-->
+            <div class="candidate-form">
+                {{ form.as_p }}
+             </div>
+        <!--{% endfor %}-->
+        </div>
+    <button type="button" id="add" class="btn btn-secondary">Add Candidate</button>
+    <button type="submit" class="btn btn-primary">Save Event</button>
+</form>
+{% endblock %}
+
+{% block scripts%}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        let candidateForms = document.getElementById('candidate-forms');
+        let totalForms = document.getElementById('id_form-TOTAL_FORMS');
+        let addButton = document.getElementById('add');
+        let maxForms = 8;
+
+        addButton.addEventListener('click', function() {
+            let currentFormCount = parseInt(totalForms.value);
+
+            if (currentFormCount < maxForms) {
+                let newForm = candidateForms.children[0].cloneNode(true);
+                newForm.innerHTML = newForm.innerHTML.replace(/form-\d+-/g, `form-${currentFormCount}-`);
+                let inputs = newForm.querySelectorAll('input, textarea');
+                inputs.forEach(input => input.value = '');
+                candidateForms.appendChild(newForm);
+                totalForms.value = currentFormCount + 1;
+            } else {
+                alert('You can only add up to 8 candidates.');
+            }
+        });
+    });
+</script>
+{% endblock %}

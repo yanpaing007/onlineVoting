@@ -1,0 +1,21 @@
+{% extends 'voting/base.html' %}
+
+{% block title %}Events in {{ selected_category.name }}{% endblock %}
+
+{% block content %}
+<h2>Events in {{ selected_category.name }}</h2>
+
+{% if events %}
+    <ul class="list-group">
+        {% for event in events %}
+            <li class="list-group-item">
+                <a href="{% url 'voting:event_detail' event_id=event.id %}">
+                    {{ event.event_name }}
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No events available in this category.</p>
+{% endif %}
+{% endblock %}
