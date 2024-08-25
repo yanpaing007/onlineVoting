@@ -60,7 +60,7 @@ def create_event(request):
                 candidate = form.save(commit=False)
                 candidate.voting_event = voting_event
                 candidate.save()
-            return redirect("voting:event_detail", event_id=voting_event.id, event_token=voting_event.event_token)
+            return redirect("voting:event_detail", event_id=voting_event.id)
     else:
         event_form = VotingEventForm()
         candidate_formset = CandidateFormSet(queryset=Candidate.objects.none())
@@ -77,7 +77,7 @@ def create_event(request):
 
 # View event details
 @login_required()
-def event_detail(request, event_id, event_token = None):
+def event_detail(request, event_id):
     now = timezone.now()
     total_seconds = 0
     voting_event = get_object_or_404(VotingEvent, id=event_id)
