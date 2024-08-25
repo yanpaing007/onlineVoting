@@ -77,7 +77,7 @@ def create_event(request):
 
 # View event details
 @login_required()
-def event_detail(request, event_id, event_token=None):
+def event_detail(request, event_id, event_token = None):
     now = timezone.now()
     total_seconds = 0
     voting_event = get_object_or_404(VotingEvent, id=event_id)
