@@ -33,8 +33,6 @@
 
 {% block scripts %}
 <script>
-    let eventForm = document.getElementById('event_form');
-    console.log(eventForm);
     document.addEventListener('DOMContentLoaded', function() {
         let candidateForms = document.getElementById('candidate-forms');
         let totalForms = document.getElementById('id_form-TOTAL_FORMS');
@@ -50,7 +48,6 @@
                 return;
             }
             maxForms = value;
-            console.log(maxForms);
         });
 
         addButton.addEventListener('click', function() {
