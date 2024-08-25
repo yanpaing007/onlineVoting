@@ -63,13 +63,13 @@
                                     </div>
                                 </div>
                                 <div class="row">
-                                    <div class="col-12">
-                                        <p class="mb-0">
-                                            {% for cat in event.categories.all %}
-                                                <span class="badge bg-secondary">{{ cat.name }}</span>
+                                        <div class="col-12">
+                                            <p class="mb-0">
+                                            {% for category in event.categories.all %}
+                                            <span class="badge rounded-pill bg-secondary">{{ category.name }}</span>
                                             {% endfor %}
-                                        </p>
-                                    </div>
+                                            </p>
+                                        </div>  
                                 </div>
                             </li>
                         {% empty %}
@@ -102,6 +102,15 @@
                                         </p>
                                     </div>
                                 </div>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <p class="mb-0">
+                                        {% for category in event.categories.all %}
+                                        <span class="badge rounded-pill bg-secondary">{{ category.name }}</span>
+                                        {% endfor %}
+                                        </p>
+                                    </div>  
+                            </div>
                             </li>
                         {% empty %}
                             <li class="list-group-item text-center">
@@ -133,6 +142,15 @@
                                         </p>
                                     </div>
                                 </div>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <p class="mb-0">
+                                        {% for category in event.categories.all %}
+                                        <span class="badge rounded-pill bg-secondary">{{ category.name }}</span>
+                                        {% endfor %}
+                                        </p>
+                                    </div>  
+                            </div>
                             </li>
                         {% empty %}
                             <li class="list-group-item text-center">

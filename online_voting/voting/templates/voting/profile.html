@@ -41,8 +41,10 @@
                     {{ profile_form.profile_picture|as_crispy_field }}
                 </div>
                 <div class="mb-3">
-                   
                     {{ profile_form.birthday|as_crispy_field }}
+                </div>
+                <div class="mb-3">
+                    {{ profile_form.timezone|as_crispy_field }}
                 </div>
                 <button type="submit" class="btn btn-primary">Update Profile</button>
             </div>
