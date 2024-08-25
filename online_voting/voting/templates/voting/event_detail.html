@@ -83,8 +83,8 @@
             object-fit: cover;
             padding: 10px;
             border: none;
-            border-radius: 20px;
-          " alt="{{ candidate.name }}" />
+            border-radius: 20px;"
+             alt="{{ candidate.name }}" />
                 {% endif %}
                 <div class="card-body">
                     <h5 class="card-title">{{ candidate.name }}</h5>
@@ -125,7 +125,7 @@
 
 {% block scripts %}
 <script>
-    let totalSeconds = {{total_seconds}};
+    let totalSeconds = {{total_seconds}}; // This is not an error.
     function startCountdown() {
         const countdownElement = document.getElementById('countdown');
         const interval = setInterval(function() {
