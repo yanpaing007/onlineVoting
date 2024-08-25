@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-be(s53pov-6#or16is-52=bmlgk=o%due*4!n34h(sycy1#rko
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['yourdomain.com', 'localhost', '127.0.0.1']
 
 MESSAGE_TAGS = {
     messages.SUCCESS: 'alert-success',
@@ -72,7 +72,7 @@ ROOT_URLCONF = 'online_voting.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates/voting')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

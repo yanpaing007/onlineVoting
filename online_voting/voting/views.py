@@ -102,7 +102,7 @@ def event_detail(request, event_id=None, event_token=None):
     elif status == 'ongoing':
         time_remaining = voting_event.end_time - now
         total_seconds = int(time_remaining.total_seconds())
-    
+
     context = {
         "event": voting_event,
         "candidates": candidates,
@@ -112,7 +112,6 @@ def event_detail(request, event_id=None, event_token=None):
     }
 
     return render(request, "voting/event_detail.html", context)
-
 
 # Vote on an event
 @login_required
