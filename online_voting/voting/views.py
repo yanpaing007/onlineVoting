@@ -60,7 +60,7 @@ def create_event(request):
                 candidate = form.save(commit=False)
                 candidate.voting_event = voting_event
                 candidate.save()
-            return redirect("voting:event_detail", event_id=voting_event.id, event_token=voting_event.event_token)
+            return redirect("voting:event_detail_by_id", event_id=voting_event.id)
     else:
         event_form = VotingEventForm()
         candidate_formset = CandidateFormSet(queryset=Candidate.objects.none())
