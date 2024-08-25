@@ -13,21 +13,26 @@
     <h3>Candidates</h3>
     {{ candidate_formset.management_form }}
         <div id="candidate-forms">
-        <!--{% for form in candidate_formset %}-->
+            {% for form in candidate_formset %}
             <div class="candidate-form">
                 {{ form.as_p }}
-             </div>
-        <!--{% endfor %}-->
+                <!-- Preview Container for Candidate -->
+                <div class="candidate-preview" style="margin-top: 10px;">
+                    <p><strong>Preview:</strong></p>
+                    <p>Name: <span class="preview-name"></span></p>
+                    <p>Description: <span class="preview-description"></span></p>
+                    <p>Profile Picture: <img class="preview-image" src="{{ candidate.profile_pic.url }}" alt="No image" style="max-width: 100px; max-height: 100px;"></p>
+                </div>
+            </div>
+        {% endfor %}
         </div>
     <button type="button" id="add" class="btn btn-secondary">Add Candidate</button>
     <button type="submit" class="btn btn-primary">Save Event</button>
 </form>
 {% endblock %}
 
-{% block scripts%}
+{% block scripts %}
 <script>
-    let eventForm = document.getElementById('event_form');
-    console.log(eventForm);
     document.addEventListener('DOMContentLoaded', function() {
         let candidateForms = document.getElementById('candidate-forms');
         let totalForms = document.getElementById('id_form-TOTAL_FORMS');
@@ -43,7 +48,6 @@
                 return;
             }
             maxForms = value;
-            console.log(maxForms);
         });
 
         addButton.addEventListener('click', function() {
@@ -51,15 +55,64 @@
 
             if (currentFormCount < maxForms) {
                 let newForm = candidateForms.children[0].cloneNode(true);
-                newForm.innerHTML = newForm.innerHTML.replace(/form-\d+-/g, `form-${currentFormCount}-`);
+                let formRegex = /form-(\d+)-/g;
+                let newFormCount = currentFormCount;
+
+                newForm.innerHTML = newForm.innerHTML.replace(formRegex, `form-${newFormCount}-`);
+                
                 let inputs = newForm.querySelectorAll('input, textarea');
-                inputs.forEach(input => input.value = '');
+                inputs.forEach(input => {
+                    input.value = '';
+                    let name = input.getAttribute('name');
+                    if (name) {
+                        input.setAttribute('name', name.replace(formRegex, `form-${newFormCount}-`));
+                        input.setAttribute('id', `id_${name.replace(formRegex, `form-${newFormCount}-`)}`);
+                    }
+                });
+
                 candidateForms.appendChild(newForm);
                 totalForms.value = currentFormCount + 1;
+
+                // Reattach preview listeners to the new form
+                addPreviewListeners(newForm);
             } else {
                 alert(`You can only add up to ${maxForms} candidates.`);
             }
         });
+
+        function addPreviewListeners(candidateForm) {
+            let nameInput = candidateForm.querySelector('input[name$="name"]');
+            let descriptionInput = candidateForm.querySelector('textarea[name$="description"]');
+            let profilePicInput = candidateForm.querySelector('input[name$="profile_pic"]');
+            let previewName = candidateForm.querySelector('.preview-name');
+            let previewDescription = candidateForm.querySelector('.preview-description');
+            let previewImage = candidateForm.querySelector('.preview-image');
+
+            nameInput.addEventListener('input', function() {
+                previewName.textContent = nameInput.value;
+            });
+
+            descriptionInput.addEventListener('input', function() {
+                previewDescription.textContent = descriptionInput.value;
+            });
+
+            profilePicInput.addEventListener('change', function() {
+                let file = profilePicInput.files[0];
+                if (file) {
+                    let reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImage.src = e.target.result;
+                    }
+                    reader.readAsDataURL(file);
+                } else {
+                    previewImage.src = '';
+                }
+            });
+        }
+
+        // Initialize previews for existing formsets on page load
+        let existingForms = candidateForms.querySelectorAll('.candidate-form');
+        existingForms.forEach(form => addPreviewListeners(form));
     });
 </script>
 {% endblock %}
