@@ -1,0 +1,40 @@
+{% extends 'voting/base.html' %}
+
+{% block title %}Voting Results{% endblock %}
+
+{% block content %}
+<h2>Results for {{ event.event_name }}</h2>
+
+<div class="container mt-4">
+    <div class="row">
+        {% for candidate in candidates %}
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                {% if candidate.profile_pic %}
+                <img src="{{ candidate.profile_pic.url }}" class="card-img-top" alt="{{ candidate.name }}" style="height: 200px; object-fit: cover;">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ candidate.name }}</h5>
+                    <p class="card-text">Total Votes: {{ candidate.votes.count }}</p>
+                    <h6>Latest Voters:</h6>
+                    <ul class="list-group">
+                        {% for vote in candidate.votes.all|slice:":10" %}
+                            <li class="list-group-item {% if vote.is_anonymous %}text-muted{% endif %}">
+                                {% if vote.is_anonymous %}
+                                    Anonymous
+                                {% else %}
+                                    {{ vote.voter.username }}
+                                {% endif %}
+                            </li>
+                        {% empty %}
+                            <li class="list-group-item">No votes yet.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}
