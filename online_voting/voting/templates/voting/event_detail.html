@@ -54,14 +54,16 @@
         </div>
     </div>
     {% endif %}
+    {% if event.event_token != None %}
     <div class="row mb-3">
         <div class="col-sm-2">
-          <strong id ="label">Event Link </strong>
+          <strong id ="label">Voting invite Link :</strong>
         </div>
         <div class="col">
           <a href="http://127.0.0.1:8000/voting/event/token/{{event.event_token}}" id="event_link">http://127.0.0.1:8000/voting/event/token/{{event.event_token}}</a>
         </div>
     </div>
+    {% endif %}
 </div>
 
 <div>

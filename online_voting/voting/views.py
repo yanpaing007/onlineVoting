@@ -7,6 +7,8 @@ from django.utils import timezone
 from django.utils.crypto import get_random_string
 from django.views import View
 from .models import VotingEvent, Candidate, Vote, Category
+from django.http import JsonResponse
+import pytz
 
 # voting/views.py
 
@@ -81,15 +83,13 @@ def event_detail(request, event_id=None, event_token=None):
     now = timezone.now()
     total_seconds = 0
 
+
     if event_id:
         # Fetch VotingEvent by event_id
         voting_event = get_object_or_404(VotingEvent, id=event_id)
-    elif event_token:
+    elif event_token != None:
         # Fetch VotingEvent by event_token
         voting_event = get_object_or_404(VotingEvent, event_token=event_token)
-    else:
-        # Handle the case where neither event_id nor event_token is provided
-        return render(request, "404.html", {"error": "Event not found"})
 
     candidates = voting_event.candidates.all()
     user_vote = Vote.objects.filter(voting_event=voting_event, voter=request.user).first()

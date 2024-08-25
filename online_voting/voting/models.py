@@ -2,7 +2,7 @@
 
 from django.db import models
 from django.contrib.auth.models import User
-from django.utils import timezone
+import pytz
 
 
 class Category(models.Model):
@@ -20,7 +20,8 @@ class VotingEvent(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='events')
     candidate_numbers = models.IntegerField(default=2)
     is_private = models.BooleanField(default=False)
-    categories = models.ManyToManyField(Category)
+    categories = models.ManyToManyField(Category, related_name='events')
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.event_name
@@ -55,6 +56,12 @@ class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
     birthday = models.DateField(blank=True, null=True)
+    timezone = models.CharField(
+        max_length=63,
+        choices=[(tz, tz) for tz in pytz.all_timezones],
+        default='UTC'
+    )
+
 
     def __str__(self):
         return self.user.username
