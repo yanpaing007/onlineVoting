@@ -21,7 +21,7 @@
     <ul class="list-group">
         {% for event in results %}
             <li class="list-group-item">
-                <a href="{% url 'voting:event_detail' event_id=event.id %}">
+                <a href="{% url 'voting:event_detail_by_id' event_id=event.id %}">
                     {{ event.event_name }}
                 </a>
                 <p>{{ event.start_time }} - {{ event.end_time }}</p>
