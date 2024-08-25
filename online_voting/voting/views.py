@@ -60,7 +60,7 @@ def create_event(request):
                 candidate = form.save(commit=False)
                 candidate.voting_event = voting_event
                 candidate.save()
-            return redirect("voting:event_detail", event_id=voting_event.id, event_token=voting_event.event_token)
+            return redirect("voting:event_detail_by_id", event_id=voting_event.id)
     else:
         event_form = VotingEventForm()
         candidate_formset = CandidateFormSet(queryset=Candidate.objects.none())
@@ -76,26 +76,37 @@ def create_event(request):
 
 
 # View event details
-@login_required()
-def event_detail(request, event_id, event_token = None):
+@login_required
+def event_detail(request, event_id=None, event_token=None):
     now = timezone.now()
     total_seconds = 0
-    voting_event = get_object_or_404(VotingEvent, id=event_id)
+    
+    if event_id:
+        # Fetch VotingEvent by event_id
+        voting_event = get_object_or_404(VotingEvent, id=event_id)
+    elif event_token:
+        # Fetch VotingEvent by event_token
+        voting_event = get_object_or_404(VotingEvent, event_token=event_token)
+    else:
+        # Handle the case where neither event_id nor event_token is provided
+        return render(request, "404.html", {"error": "Event not found"})
+
     candidates = voting_event.candidates.all()
-    user_vote = Vote.objects.filter(voting_event=voting_event,voter= request.user).first()
+    user_vote = Vote.objects.filter(voting_event=voting_event, voter=request.user).first()
     voted_candidate = user_vote.candidate if user_vote else None
     status = event_status(voting_event, now)
-    if status =='upcoming':
+    
+    if status == 'upcoming':
         time_remaining = voting_event.start_time - now
         total_seconds = int(time_remaining.total_seconds())
-    elif status =='ongoing':
+    elif status == 'ongoing':
         time_remaining = voting_event.end_time - now
         total_seconds = int(time_remaining.total_seconds())
     
     context = {
-        "event": voting_event, 
-        "candidates": candidates, 
-        "voted_candidate": voted_candidate, 
+        "event": voting_event,
+        "candidates": candidates,
+        "voted_candidate": voted_candidate,
         "status": status,
         "total_seconds": total_seconds
     }
