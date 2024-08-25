@@ -6,9 +6,10 @@
 {% block content %}
 <h2>Create New Event</h2>
 <form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ event_form.as_p }}
-
+    <div id="event_form">
+        {% csrf_token %}
+        {{ event_form.as_p }}
+    </div>
     <h3>Candidates</h3>
     {{ candidate_formset.management_form }}
         <div id="candidate-forms">
@@ -25,11 +26,25 @@
 
 {% block scripts%}
 <script>
+    let eventForm = document.getElementById('event_form');
+    console.log(eventForm);
     document.addEventListener('DOMContentLoaded', function() {
         let candidateForms = document.getElementById('candidate-forms');
         let totalForms = document.getElementById('id_form-TOTAL_FORMS');
         let addButton = document.getElementById('add');
-        let maxForms = 8;
+        let candidateNumberInput = document.getElementById('id_candidate_numbers');
+        let maxForms = parseInt(candidateNumberInput.value || '2', 10);
+
+        candidateNumberInput.addEventListener('change', function() {
+            let value = parseInt(candidateNumberInput.value, 10);
+            if (isNaN(value) || value < 2) {
+                alert('The number of candidates must be at least 2.');
+                candidateNumberInput.value = '';
+                return;
+            }
+            maxForms = value;
+            console.log(maxForms);
+        });
 
         addButton.addEventListener('click', function() {
             let currentFormCount = parseInt(totalForms.value);
@@ -42,7 +57,7 @@
                 candidateForms.appendChild(newForm);
                 totalForms.value = currentFormCount + 1;
             } else {
-                alert('You can only add up to 8 candidates.');
+                alert(`You can only add up to ${maxForms} candidates.`);
             }
         });
     });
