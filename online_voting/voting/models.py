@@ -20,7 +20,7 @@ class VotingEvent(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='events')
     candidate_numbers = models.IntegerField(default=2)
     is_private = models.BooleanField(default=False)
-    categories = models.ManyToManyField(Category)
+    categories = models.ManyToManyField(Category, related_name='events')
 
     def __str__(self):
         return self.event_name
