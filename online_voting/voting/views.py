@@ -20,17 +20,16 @@ from .forms import (
 )
 
 #Return current status of Event.
-def event_status(event):
-    now = timezone.now()
-    ongoing = event.start_time__lte=now and event.end_time__gte=now
-    upcoming = event.start_time__gt=now
-    previous = event.end_time__lt=now
+def event_status(event, now):
+    ongoing = event.start_time <= now and event.end_time >= now
+    upcoming = event.start_time > now
+    previous = event.end_time < now
     if ongoing:
-        return ongoing
+        return 'ongoing'
     elif upcoming:
-        return upcoming
+        return 'upcoming'
     elif previous:
-        return previous
+        return 'ended'
     
     return None
 
@@ -78,18 +77,30 @@ def create_event(request):
 
 # View event details
 @login_required()
-def event_detail(request, event_id, event_token):
+def event_detail(request, event_id, event_token=None):
+    now = timezone.now()
+    total_seconds = 0
     voting_event = get_object_or_404(VotingEvent, id=event_id)
     candidates = voting_event.candidates.all()
     user_vote = Vote.objects.filter(voting_event=voting_event,voter= request.user).first()
     voted_candidate = user_vote.candidate if user_vote else None
-    status = event_status(voting_event)
+    status = event_status(voting_event, now)
+    if status =='upcoming':
+        time_remaining = voting_event.start_time - now
+        total_seconds = int(time_remaining.total_seconds())
+    elif status =='ongoing':
+        time_remaining = voting_event.end_time - now
+        total_seconds = int(time_remaining.total_seconds())
     
-    return render(
-        request,
-        "voting/event_detail.html",
-        {"event": voting_event, "candidates": candidates, "voted_candidate": voted_candidate, "status": status},
-    )
+    context = {
+        "event": voting_event, 
+        "candidates": candidates, 
+        "voted_candidate": voted_candidate, 
+        "status": status,
+        "total_seconds": total_seconds
+    }
+
+    return render(request, "voting/event_detail.html", context)
 
 
 # Vote on an event
@@ -126,7 +137,7 @@ def vote_result(request, event_id):
     return render(
         request,
         "voting/vote_result.html",
-        {"event": voting_event, "candidates": candidates, "status": event_status(voting_event)},
+        {"event": voting_event, "candidates": candidates, "status": event_status(voting_event, timezone.now())},
     )
 
 
