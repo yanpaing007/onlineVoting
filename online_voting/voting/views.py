@@ -19,6 +19,19 @@ from .forms import (
     Profile,
 )
 
+#Return current status of Event.
+def event_status(event, now):
+    ongoing = event.start_time <= now and event.end_time >= now
+    upcoming = event.start_time > now
+    previous = event.end_time < now
+    if ongoing:
+        return 'ongoing'
+    elif upcoming:
+        return 'upcoming'
+    elif previous:
+        return 'ended'
+    
+    return None
 
 # Generate a unique token for private events
 def generate_unique_token():
@@ -38,10 +51,8 @@ def create_event(request):
         if event_form.is_valid() and candidate_formset.is_valid():
             voting_event = event_form.save(commit=False)
             voting_event.created_by = request.user
-            if voting_event.is_private:
+            if voting_event.is_private:        
                 voting_event.event_token = generate_unique_token()
-            else:
-                voting_event.event_token = "0000"
             voting_event.save()
             selected_categories = event_form.cleaned_data["categories"]
             voting_event.categories.set(selected_categories)
@@ -49,7 +60,7 @@ def create_event(request):
                 candidate = form.save(commit=False)
                 candidate.voting_event = voting_event
                 candidate.save()
-            return redirect("voting:event_detail", event_id=voting_event.id)
+            return redirect("voting:event_detail", event_id=voting_event.id, event_token=voting_event.event_token)
     else:
         event_form = VotingEventForm()
         candidate_formset = CandidateFormSet(queryset=Candidate.objects.none())
@@ -66,18 +77,30 @@ def create_event(request):
 
 # View event details
 @login_required()
-def event_detail(request, event_id):
+def event_detail(request, event_id, event_token = None):
+    now = timezone.now()
+    total_seconds = 0
     voting_event = get_object_or_404(VotingEvent, id=event_id)
     candidates = voting_event.candidates.all()
     user_vote = Vote.objects.filter(voting_event=voting_event,voter= request.user).first()
-    voted_candidate =user_vote.candidate if user_vote else None
+    voted_candidate = user_vote.candidate if user_vote else None
+    status = event_status(voting_event, now)
+    if status =='upcoming':
+        time_remaining = voting_event.start_time - now
+        total_seconds = int(time_remaining.total_seconds())
+    elif status =='ongoing':
+        time_remaining = voting_event.end_time - now
+        total_seconds = int(time_remaining.total_seconds())
     
-    
-    return render(
-        request,
-        "voting/event_detail.html",
-        {"event": voting_event, "candidates": candidates, "voted_candidate": voted_candidate},
-    )
+    context = {
+        "event": voting_event, 
+        "candidates": candidates, 
+        "voted_candidate": voted_candidate, 
+        "status": status,
+        "total_seconds": total_seconds
+    }
+
+    return render(request, "voting/event_detail.html", context)
 
 
 # Vote on an event
@@ -92,16 +115,14 @@ def vote(request, event_id):
 
     if request.method == "POST":
         candidate_id = request.POST.get("candidate")
+        anonymous_vote = request.POST.get("anonymousVote")
+
         if candidate_id:
             candidate = get_object_or_404(Candidate, pk=candidate_id)
-
             # Save the vote with the voter information
             vote = Vote(candidate=candidate, voting_event=event, voter=request.user)
-
-            # Set the vote as anonymous if the event is private
-            if event.is_private:
-                vote.is_anonymous = True
-
+            if anonymous_vote =="on":
+                vote.is_anonymous=True
             vote.save()
             messages.success(request, "Your vote has been cast successfully!")
             return redirect("voting:vote_result", event_id=event.id)
@@ -113,20 +134,20 @@ def vote(request, event_id):
 def vote_result(request, event_id):
     voting_event = get_object_or_404(VotingEvent, id=event_id)
     candidates = voting_event.candidates.all()
-    now = timezone.now()
     return render(
         request,
         "voting/vote_result.html",
-        {"event": voting_event, "candidates": candidates, "now": now},
+        {"event": voting_event, "candidates": candidates, "status": event_status(voting_event, timezone.now())},
     )
 
 
 # See events by filtering them
 def event_list(request):
     now = timezone.now()
-    ongoing_events = VotingEvent.objects.filter(start_time__lte=now, end_time__gte=now)
-    upcoming_events = VotingEvent.objects.filter(start_time__gt=now)
-    previous_events = VotingEvent.objects.filter(end_time__lt=now)
+    all_events = VotingEvent.objects.filter(is_private=False)
+    ongoing_events = all_events.filter(start_time__lte=now, end_time__gte=now)
+    upcoming_events = all_events.filter(start_time__gt=now)
+    previous_events = all_events.filter(end_time__lt=now)
 
     categories = Category.objects.all()
 
@@ -243,3 +264,14 @@ def event_by_category(request, cate):
         "voting/event_list.html",
         {"events": events, "selected_category": category},
     )
+
+def search_events(request):
+    query = request.GET.get('query')
+    print(query)
+    results = []
+    if query and len(query) >= 3:
+        results = VotingEvent.objects.filter(event_name__icontains=query)
+    else:
+        messages.error(request, "Invalid input")
+    print(results)
+    return render(request, 'voting/search_results.html', {'results': results, 'query': query})
