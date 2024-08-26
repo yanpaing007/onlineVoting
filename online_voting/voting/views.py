@@ -4,11 +4,12 @@ from django.contrib import messages
 from django.forms import modelformset_factory
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
+from datetime import datetime
 from django.utils.crypto import get_random_string
 from django.views import View
-from .models import VotingEvent, Candidate, Vote, Category
-from django.http import JsonResponse
+from .models import VotingEvent, Candidate, Vote, Category, Profile
 import pytz
+from zoneinfo import ZoneInfo
 
 # voting/views.py
 
@@ -18,7 +19,6 @@ from .forms import (
     VotingEventForm,
     CandidateForm,
     RegisterForm,
-    Profile,
 )
 
 #Return current status of Event.
@@ -42,26 +42,46 @@ def generate_unique_token():
         if not VotingEvent.objects.filter(event_token=token).exists():
             return token
 
+      
+#Format User Datetime input
+def get_user_datetime(input_dt, user_timezone):
+    dt = input_dt.replace(tzinfo=ZoneInfo(user_timezone))
+    return dt
+
 
 # Create a new voting event
 @login_required
 def create_event(request):
-    CandidateFormSet = modelformset_factory(Candidate, form=CandidateForm, extra=1)
+    CandidateFormSet = modelformset_factory(Candidate, form=CandidateForm, extra=0)
     if request.method == "POST":
         event_form = VotingEventForm(request.POST)
         candidate_formset = CandidateFormSet(request.POST, request.FILES)
         if event_form.is_valid() and candidate_formset.is_valid():
             voting_event = event_form.save(commit=False)
             voting_event.created_by = request.user
-            if voting_event.is_private:        
+
+            #Get User Input Datetime and Timezone
+            start_time = event_form.cleaned_data['start_time']
+            end_time = event_form.cleaned_data['end_time']
+            user_timezone = request.user.profile.timezone
+
+            #Change datetime format to UTC (Systerm format)
+            voting_event.start_time = get_user_datetime(start_time, user_timezone).astimezone(pytz.UTC)
+            voting_event.end_time = get_user_datetime(end_time, user_timezone).astimezone(pytz.UTC)
+            print(voting_event.start_time)
+
+            if voting_event.is_private:
                 voting_event.event_token = generate_unique_token()
+
             voting_event.save()
             selected_categories = event_form.cleaned_data["categories"]
             voting_event.categories.set(selected_categories)
+
             for form in candidate_formset:
                 candidate = form.save(commit=False)
                 candidate.voting_event = voting_event
                 candidate.save()
+
             return redirect("voting:event_detail_by_id", event_id=voting_event.id)
     else:
         event_form = VotingEventForm()
@@ -80,9 +100,9 @@ def create_event(request):
 # View event details
 @login_required
 def event_detail(request, event_id=None, event_token=None):
+
     now = timezone.now()
     total_seconds = 0
-
 
     if event_id:
         # Fetch VotingEvent by event_id
@@ -110,7 +130,6 @@ def event_detail(request, event_id=None, event_token=None):
         "status": status,
         "total_seconds": total_seconds
     }
-
     return render(request, "voting/event_detail.html", context)
 
 # Vote on an event
@@ -121,7 +140,7 @@ def vote(request, event_id):
     # Check if the user has already voted for this event
     if Vote.objects.filter(voting_event=event, voter=request.user).exists():
         messages.error(request, "You have already voted for this event!")
-        return redirect("voting:event_detail", event_id=event.id)
+        return redirect("voting:vote_result", event_id=event.id)
 
     if request.method == "POST":
         candidate_id = request.POST.get("candidate")
@@ -153,7 +172,7 @@ def vote_result(request, event_id):
 
 # See events by filtering them
 def event_list(request):
-    now = timezone.now()
+    now = timezone.now().astimezone(pytz.UTC)
     all_events = VotingEvent.objects.filter(is_private=False)
     ongoing_events = all_events.filter(start_time__lte=now, end_time__gte=now)
     upcoming_events = all_events.filter(start_time__gt=now)

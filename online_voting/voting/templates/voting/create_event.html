@@ -1,5 +1,7 @@
 {% extends 'voting/base.html' %}
 
+{% load crispy_forms_tags %}  {# Load crispy forms template tags #}
+
 {% block title %}Create Event{% endblock %}
 
 {% block content %}
@@ -7,24 +9,38 @@
 <form method="post" enctype="multipart/form-data">
     <div id="event_form">
         {% csrf_token %}
-        {{ event_form.as_p }}
+        {{ event_form|crispy }}  {# Render the event form using Crispy Forms #}
     </div>
     <h3>Candidates</h3>
     {{ candidate_formset.management_form }}
-    <div id="candidate-container">
+    <div id="candidate-container" class="row">
         <!-- Reusable candidate form input -->
-        <div id="candidate-input-form">
-            <div class="candidate-form">
-                {{ candidate_formset.empty_form.as_p }}
+        <div id="candidate-input-form" class="col-md-3 d-none">
+            <div class="card mb-3">
+                <div class="card-body">
+                    {{ candidate_formset.empty_form.name|as_crispy_field }}  {# Render the name field with Crispy Forms #}
+                    {{ candidate_formset.empty_form.description|as_crispy_field }}  {# Render the description field #}
+                    
+                    <div class="form-group">
+                        {{ candidate_formset.empty_form.profile_pic|as_crispy_field }}  {# Render the profile picture field #}
+                    </div>
+                </div>
             </div>
         </div>
-        <!-- Preview Container for Candidate -->
-        <div id="candidate-preview">
-            <p><strong>Preview:</strong></p>
-            <p>Name: <span class="preview-name"></span></p>
-            <p>Description: <span class="preview-description"></span></p>
-            <p>Profile Picture: <img class="preview-image" alt="No image" style="max-width: 100px; max-height: 100px;"></p>
+        <!-- Render initial formset forms if they exist -->
+        {% for form in candidate_formset.forms %}
+        <div class="col-md-3 candidate-form">
+            <div class="card mb-3">
+                <div class="card-body">
+                    {{ form.name|as_crispy_field }}
+                    {{ form.description|as_crispy_field }}
+                    <div class="form-group">
+                        {{ form.profile_pic|as_crispy_field }}
+                    </div>
+                </div>
+            </div>
         </div>
+        {% endfor %}
     </div>
     <button type="button" id="add" class="btn btn-secondary">Add Candidate</button>
     <button type="submit" class="btn btn-primary">Save Event</button>
@@ -34,7 +50,7 @@
 {% block scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const candidateForms = document.getElementById('candidate-container');
+        const candidateContainer = document.getElementById('candidate-container');
         const totalForms = document.getElementById('id_form-TOTAL_FORMS');
         const addButton = document.getElementById('add');
         const maxFormsInput = document.getElementById('id_candidate_numbers');
@@ -44,7 +60,7 @@
             let value = parseInt(maxFormsInput.value, 10);
             if (isNaN(value) || value < 2) {
                 alert('The number of candidates must be at least 2.');
-                maxFormsInput.value = '';
+                maxFormsInput.value = '2';  // Set to default minimum
                 return;
             }
             maxForms = value;
@@ -55,54 +71,24 @@
 
             if (currentFormCount < maxForms) {
                 const newForm = document.createElement('div');
-                newForm.classList.add('candidate-form');
-                newForm.innerHTML = document.getElementById('candidate-input-form').innerHTML;
+                newForm.classList.add('col-md-3', 'candidate-form');  // Adding Bootstrap grid class
+                newForm.innerHTML = `
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            ${document.getElementById('candidate-input-form').innerHTML}
+                        </div>
+                    </div>
+                `;
 
                 const formRegex = /__prefix__/g;
                 newForm.innerHTML = newForm.innerHTML.replace(formRegex, currentFormCount);
 
-                candidateForms.insertBefore(newForm, candidateForms.lastElementChild);
+                candidateContainer.appendChild(newForm);
                 totalForms.value = currentFormCount + 1;
-
-                // Reattach preview listeners to the new form
-                addPreviewListeners(newForm);
             } else {
                 alert(`You can only add up to ${maxForms} candidates.`);
             }
         });
-
-        function addPreviewListeners(candidateForm) {
-            let nameInput = candidateForm.querySelector('input[name$="name"]');
-            let descriptionInput = candidateForm.querySelector('textarea[name$="description"]');
-            let profilePicInput = candidateForm.querySelector('input[name$="profile_pic"]');
-            let previewName = candidateForms.querySelector('.preview-name');
-            let previewDescription = candidateForms.querySelector('.preview-description');
-            let previewImage = candidateForms.querySelector('.preview-image');
-
-            nameInput.addEventListener('input', function() {
-                previewName.textContent = nameInput.value;
-            });
-
-            descriptionInput.addEventListener('input', function() {
-                previewDescription.textContent = descriptionInput.value;
-            });
-
-            profilePicInput.addEventListener('change', function() {
-                let file = profilePicInput.files[0];
-                if (file) {
-                    let reader = new FileReader();
-                    reader.onload = function(e) {
-                        previewImage.src = e.target.result;
-                    }
-                    reader.readAsDataURL(file);
-                } else {
-                    previewImage.src = '';
-                }
-            });
-        }
-
-        // Initialize previews for existing formsets on page load
-        addPreviewListeners(document.querySelector('#candidate-input-form .candidate-form'));
     });
 </script>
 {% endblock %}
@@ -111,14 +97,21 @@
 <style>
     #candidate-container {
         display: flex;
+        flex-wrap: wrap;  /* Wraps the cards to maintain responsive design */
         gap: 20px; /* Space between form and preview */
     }
-    .candidate-form, #candidate-preview {
+    .card {
         flex: 1; /* Take equal space */
+        border-radius: 20px;
+        border: none;
     }
-    #candidate-preview {
-        border: 1px solid #ddd;
+    .img-fluid {
+        width: auto;
+        height: 300px;
+        object-fit: cover;
         padding: 10px;
+        border: none;
+        border-radius: 20px;
     }
 </style>
 {% endblock %}
