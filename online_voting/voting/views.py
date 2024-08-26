@@ -21,6 +21,38 @@ from .forms import (
     RegisterForm,
 )
 
+# To resolve Timezone differences.
+class DatetimeFormatter:
+    def __init__(self, event, user_timezone='UTC'):        
+        self.event = event
+        self.user_timezone = ZoneInfo(user_timezone) if 'ZoneInfo' in globals() else pytz.timezone(user_timezone)
+
+    # Format Input Datetime to user local timezone
+    def set_user_time(self):
+        self.event.start_time = self.event.start_time.replace(tzinfo=self.user_timezone)
+        self.event.end_time = self.event.end_time.replace(tzinfo=self.user_timezone)
+        return self.event
+
+    # Convert System time to user local time.
+    def get_user_time(self):
+        self.event.start_time = self.event.start_time.astimezone(self.user_timezone)
+        self.event.end_time = self.event.end_time.astimezone(self.user_timezone)
+        return self.event
+
+    # Convert user local time to system time (UTC). 
+    def get_system_time(self):
+        self.event.start_time = self.event.start_time.astimezone(pytz.UTC)
+        self.event.end_time = self.event.end_time.astimezone(pytz.UTC)
+        return self.event
+
+def events_in_user_time(events, user_timezone):
+    result = []
+    for event in events:
+        formatter = DatetimeFormatter(event, user_timezone)
+        event = formatter.get_user_time()
+        result.append(event)
+    return result
+
 #Return current status of Event.
 def event_status(event, now):
     ongoing = event.start_time <= now and event.end_time >= now
@@ -42,12 +74,6 @@ def generate_unique_token():
         if not VotingEvent.objects.filter(event_token=token).exists():
             return token
 
-      
-#Format User Datetime input
-def get_user_datetime(input_dt, user_timezone):
-    dt = input_dt.replace(tzinfo=ZoneInfo(user_timezone))
-    return dt
-
 
 # Create a new voting event
 @login_required
@@ -56,32 +82,41 @@ def create_event(request):
     if request.method == "POST":
         event_form = VotingEventForm(request.POST)
         candidate_formset = CandidateFormSet(request.POST, request.FILES)
+
         if event_form.is_valid() and candidate_formset.is_valid():
             voting_event = event_form.save(commit=False)
             voting_event.created_by = request.user
 
-            #Get User Input Datetime and Timezone
-            start_time = event_form.cleaned_data['start_time']
-            end_time = event_form.cleaned_data['end_time']
+            # Get User Input Datetime and Timezone
+            voting_event.start_time = event_form.cleaned_data['start_time']
+            voting_event.end_time = event_form.cleaned_data['end_time']
             user_timezone = request.user.profile.timezone
 
-            #Change datetime format to UTC (Systerm format)
-            voting_event.start_time = get_user_datetime(start_time, user_timezone).astimezone(pytz.UTC)
-            voting_event.end_time = get_user_datetime(end_time, user_timezone).astimezone(pytz.UTC)
-            print(voting_event.start_time)
+            # Format Datetime to user local time
+            formatter = DatetimeFormatter(voting_event, user_timezone)
+            voting_event = formatter.set_user_time()
+
+            # Convert user local time to system time (UTC)
+            formatter = DatetimeFormatter(voting_event)
+            voting_event = formatter.get_system_time()
 
             if voting_event.is_private:
                 voting_event.event_token = generate_unique_token()
 
+            # Save the voting event
             voting_event.save()
+
+            # Assign categories to the voting event
             selected_categories = event_form.cleaned_data["categories"]
             voting_event.categories.set(selected_categories)
 
+            # Save each candidate related to the voting event
             for form in candidate_formset:
                 candidate = form.save(commit=False)
                 candidate.voting_event = voting_event
                 candidate.save()
 
+            # Redirect to event detail page
             return redirect("voting:event_detail_by_id", event_id=voting_event.id)
     else:
         event_form = VotingEventForm()
@@ -100,13 +135,13 @@ def create_event(request):
 # View event details
 @login_required
 def event_detail(request, event_id=None, event_token=None):
-
     now = timezone.now()
     total_seconds = 0
 
     if event_id:
         # Fetch VotingEvent by event_id
         voting_event = get_object_or_404(VotingEvent, id=event_id)
+
     elif event_token != None:
         # Fetch VotingEvent by event_token
         voting_event = get_object_or_404(VotingEvent, event_token=event_token)
@@ -126,8 +161,8 @@ def event_detail(request, event_id=None, event_token=None):
     candidates = voting_event.candidates.all()
     user_vote = Vote.objects.filter(voting_event=voting_event, voter=request.user).first()
     voted_candidate = user_vote.candidate if user_vote else None
-    status = event_status(voting_event, now)
 
+    status = event_status(voting_event, now)
     if status == 'upcoming':
         time_remaining = voting_event.start_time - now
         total_seconds = int(time_remaining.total_seconds())
@@ -185,18 +220,24 @@ def vote_result(request, event_id):
 
 # See events by filtering them
 def event_list(request):
-    now = timezone.now().astimezone(pytz.UTC)
+    user_timezone = request.user.profile.timezone
+    now = timezone.now()
+    categories = Category.objects.all()
     all_events = VotingEvent.objects.filter(is_private=False)
+
     ongoing_events = all_events.filter(start_time__lte=now, end_time__gte=now)
     upcoming_events = all_events.filter(start_time__gt=now)
     previous_events = all_events.filter(end_time__lt=now)
 
-    categories = Category.objects.all()
+    #Display in user time
+    ongoing = events_in_user_time(ongoing_events, user_timezone)
+    upcoming = events_in_user_time(upcoming_events, user_timezone)
+    previous = events_in_user_time(previous_events, user_timezone)
 
     context = {
-        "ongoing_events": ongoing_events,
-        "upcoming_events": upcoming_events,
-        "previous_events": previous_events,
+        "ongoing_events": ongoing,
+        "upcoming_events": upcoming,
+        "previous_events": previous,
         "categories": categories,
     }
 
@@ -206,6 +247,7 @@ def event_list(request):
 # Events created by user
 @login_required
 def my_events(request):
+    user_timezone = request.user.profile.timezone
     events = VotingEvent.objects.filter(created_by=request.user)
     voted_events = VotingEvent.objects.filter(votes__voter=request.user).distinct()
     favorites = Favorite.objects.filter(user=request.user).select_related('event')
@@ -299,11 +341,12 @@ class LoginView(View):
 
         return render(request, self.template_name)
 
-
 # Filter by category
 def event_by_category(request, cate):
+    user_timezone = request.user.profile.timezone
     category = get_object_or_404(Category, name=cate)
     events = VotingEvent.objects.filter(categories=category)
+
     return render(
         request,
         "voting/event_list.html",
@@ -311,6 +354,7 @@ def event_by_category(request, cate):
     )
 
 def search_events(request):
+    user_timezone = request.user.profile.timezone
     query = request.GET.get('query')
     print(query)
     results = []
@@ -318,7 +362,7 @@ def search_events(request):
         results = VotingEvent.objects.filter(event_name__icontains=query)
     else:
         messages.error(request, "Invalid input")
-    print(results)
+        
     return render(request, 'voting/search_results.html', {'results': results, 'query': query})
 
 
