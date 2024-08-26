@@ -4,17 +4,86 @@
 {% block title %}My Events{% endblock %}
 
 {% block content %}
-<h2>My Events</h2>
-{% if events %}
-    <ul class="list-group">
-        {% for event in events %}
-            <li class="list-group-item">
-                <a href="{% url 'voting:event_detail_by_id' event.id %}">{{ event.event_name }}</a>
-                <p>{{ event.start_time }} - {{ event.end_time }}</p>
-            </li>
-        {% endfor %}
-    </ul>
-{% else %}
-    <p>No events created yet.</p>
-{% endif %}
+<!-- Container for the tabs and event details -->
+<div class="container my-4">
+    <div class="row">
+        <!-- Tabs for Event Details -->
+        <div class="col-12 mb-4">
+            <ul class="nav nav-tabs" id="eventTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link active" id="created-events-tab" data-bs-toggle="tab" href="#created-events" role="tab" aria-controls="created-events" aria-selected="true">Created Events</a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="voted-events-tab" data-bs-toggle="tab" href="#voted-events" role="tab" aria-controls="voted-events" aria-selected="false">Voted Events</a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="favorite-events-tab" data-bs-toggle="tab" href="#favorite-events" role="tab" aria-controls="favorite-events" aria-selected="false">Favorite Events</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div class="row">
+        <!-- Event Details Tabs Content -->
+        <div class="col-12">
+            <div class="tab-content" id="eventTabsContent">
+                <!-- Created Events Tab -->
+                <div class="tab-pane fade show active" id="created-events" role="tabpanel" aria-labelledby="created-events-tab">
+                    <h2>Created Events</h2>
+                    {% if events %}
+                        <ul class="list-group">
+                            {% for event in events %}
+                                <li class="list-group-item mt-2 mb-2 rounded-2">
+                                    <a href="{% url 'voting:event_detail_by_id' event.id %}">{{ event.event_name }}</a>
+                                    <p>{{ event.start_time }} - {{ event.end_time }}</p>
+                                     <!-- Assuming you have a 'creator' field in your model -->
+                                        <form action="{% url 'voting:delete_event' event.id %}" method="post" style="display:inline;">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                        </form>
+                                   
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>No events created yet.</p>
+                    {% endif %}
+                </div>
+
+                <!-- Voted Events Tab -->
+                <div class="tab-pane fade" id="voted-events" role="tabpanel" aria-labelledby="voted-events-tab">
+                    <h2>Voted Events</h2>
+                    {% if voted_events %}
+                        <ul class="list-group">
+                            {% for event in voted_events %}
+                                <li class="list-group-item mt-2 mb-2 rounded-2">
+                                    <a href="{% url 'voting:event_detail_by_id' event.id %}">{{ event.event_name }}</a>
+                                    <p>{{ event.start_time }} - {{ event.end_time }}</p>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>No events voted yet.</p>
+                    {% endif %}
+                </div>
+
+                <!-- Favorite Events Tab -->
+                <div class="tab-pane fade" id="favorite-events" role="tabpanel" aria-labelledby="favorite-events-tab">
+                    <h2>Favorite Events</h2>
+                    {% if favorites %}
+                        <ul class="list-group">
+                            {% for favorite in favorites %}
+                                <li class="list-group-item mt-2 mb-2 rounded-2">
+                                    <a href="{% url 'voting:event_detail_by_id' favorite.event.id %}">{{ favorite.event.event_name }}</a>
+                                    <p>Starts: {{ favorite.event.start_time|date:"F j, Y, g:i a" }}</p>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>You have no favorite events yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
