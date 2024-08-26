@@ -1,13 +1,13 @@
+import time
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.forms import modelformset_factory
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
-from datetime import datetime
 from django.utils.crypto import get_random_string
 from django.views import View
-from .models import VotingEvent, Candidate, Vote, Category, Profile
+from .models import VotingEvent, Candidate, Vote, Category, Profile , Favorite
 import pytz
 from zoneinfo import ZoneInfo
 
@@ -110,7 +110,19 @@ def event_detail(request, event_id=None, event_token=None):
     elif event_token != None:
         # Fetch VotingEvent by event_token
         voting_event = get_object_or_404(VotingEvent, event_token=event_token)
+    
+    
+    is_favorited = Favorite.objects.filter(user=request.user, event=voting_event).exists()
 
+    if request.method == "POST" and 'favorite' in request.POST:
+        # Handle adding/removing favorites
+        if is_favorited:
+            Favorite.objects.filter(user=request.user, event=voting_event).delete()
+        else:
+            Favorite.objects.create(user=request.user, event=voting_event)
+        return redirect('voting:event_detail_by_id', event_id=voting_event.id)
+    
+    
     candidates = voting_event.candidates.all()
     user_vote = Vote.objects.filter(voting_event=voting_event, voter=request.user).first()
     voted_candidate = user_vote.candidate if user_vote else None
@@ -128,7 +140,8 @@ def event_detail(request, event_id=None, event_token=None):
         "candidates": candidates,
         "voted_candidate": voted_candidate,
         "status": status,
-        "total_seconds": total_seconds
+        "total_seconds": total_seconds,
+        'is_favorited': is_favorited,
     }
     return render(request, "voting/event_detail.html", context)
 
@@ -156,7 +169,7 @@ def vote(request, event_id):
             messages.success(request, "Your vote has been cast successfully!")
             return redirect("voting:vote_result", event_id=event.id)
 
-    return redirect("voting:event_detail", event_id=event.id)
+    return redirect("voting:event_detail_by_id", event_id=event.id)
 
 
 # View voting results
@@ -194,7 +207,9 @@ def event_list(request):
 @login_required
 def my_events(request):
     events = VotingEvent.objects.filter(created_by=request.user)
-    return render(request, "voting/myevent.html", {"events": events})
+    voted_events = VotingEvent.objects.filter(votes__voter=request.user).distinct()
+    favorites = Favorite.objects.filter(user=request.user).select_related('event')
+    return render(request, "voting/myevent.html", {"events": events, "voted_events": voted_events, "favorites": favorites})
 
 
 # Update profile
@@ -244,6 +259,7 @@ class RegistrationView(View):
         form = self.form_class(request.POST)
         if form.is_valid():
             form.save()
+            messages.success(request, "Registration Successful!")
             return redirect("login")  # Redirect to login after successful registration
         return render(request, self.template_name, {"form": form})
 
@@ -274,7 +290,7 @@ class LoginView(View):
                 request.session.set_expiry(1209600)  # Set session to 2 weeks
             else:
                 request.session.set_expiry(0)  # Set session to expire at browser close
-
+            messages.success(request, "Login Success!")
             return redirect(
                 "voting:event_list"
             )  # Redirect to a success page or home page
@@ -304,3 +320,9 @@ def search_events(request):
         messages.error(request, "Invalid input")
     print(results)
     return render(request, 'voting/search_results.html', {'results': results, 'query': query})
+
+
+def delete_event(request, event_id):
+    event = get_object_or_404(VotingEvent, id=event_id)
+    event.delete()
+    return redirect('voting:my_events')

@@ -1,17 +1,5 @@
 {% extends "voting/base.html" %} {% block content %}
 
-
-  <!-- Display Error Messages -->
-  {% if form.errors %}
-  <div class="alert alert-danger">
-    <ul>
-      {% for field, errors in form.errors.items %}
-      <li><strong>{{ field|capfirst }}:</strong> {{ errors|join:", " }}</li>
-      {% endfor %}
-    </ul>
-  </div>
-  {% endif %}
-
   <div class="row justify-content-center mt-5">
     <div class="col-md-10 col-lg-8 col-xl-6">
       <div class="card shadow-lg border-0 rounded-4">
@@ -28,43 +16,45 @@
             <div class="form-group mb-3">
               <label for="id_username">Username</label>
               {{ form.username }} {% if form.username.errors %}
-              <small class="text-muted">{{ form.username.errors.as_text }}</small>
+              <small class="text-danger">{{ form.username.errors.as_text }}</small>
               {% endif %}
             </div>
 
             <div class="form-group mb-3">
               <label for="id_email">Email</label>
               {{ form.email }} {% if form.email.errors %}
-              <small class="text-muted">{{ form.email.errors.as_text }}</small>
+              <small class="text-danger">{{ form.email.errors.as_text }}</small>
               {% endif %}
             </div>
 
             <div class="form-group mb-3">
               <label for="id_name">Full Name</label>
               {{ form.name }} {% if form.name.errors %}
-              <small class="text-muted">{{ form.name.errors.as_text }}</small>
+              <small class="text-danger">{{ form.name.errors.as_text }}</small>
               {% endif %}
             </div>
 
             <div class="form-group mb-3 position-relative">
               <label for="id_password1">Password</label>
-              {{ form.password1 }}
-              <i class="bi bi-eye position-absolute top-50 end-0 translate-middle-y mt-3 pe-3" id="toggle-password1"
-                style="cursor: pointer"></i>
+              <div class="position-relative">
+                  {{ form.password1 }}
+                  <i class="bi bi-eye position-absolute top-50 end-0 translate-middle-y pe-3" id="toggle-password1" style="cursor: pointer;"></i>
+              </div>
               {% if form.password1.errors %}
-              <small class="text-muted">{{ form.password1.errors.as_text }}</small>
+              <small class="text-danger">{{ form.password1.errors.as_text }}</small>
               {% endif %}
-            </div>
+          </div>
 
             <div class="form-group mb-3 position-relative">
               <label for="id_password2">Confirm Password</label>
-              {{ form.password2 }}
-              <i class="bi bi-eye position-absolute top-50 end-0 mt-3 translate-middle-y pe-3" id="toggle-password2"
-                style="cursor: pointer"></i>
+              <div class="position-relative">
+                  {{ form.password2 }}
+                  <i class="bi bi-eye position-absolute top-50 end-0 translate-middle-y pe-3" id="toggle-password2" style="cursor: pointer;"></i>
+              </div>
               {% if form.password2.errors %}
-              <small class="text-muted">{{ form.password2.errors.as_text }}</small>
+              <small class="text-danger">{{ form.password2.errors.as_text }}</small>
               {% endif %}
-            </div>
+          </div>
 
             <button type="submit" class="btn btn-primary w-100 py-2">Register</button>
           </form>
