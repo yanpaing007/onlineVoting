@@ -2,7 +2,7 @@ import time
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.forms import modelformset_factory
+from django.forms import ValidationError, modelformset_factory
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.utils.crypto import get_random_string
@@ -79,45 +79,56 @@ def generate_unique_token():
 @login_required
 def create_event(request):
     CandidateFormSet = modelformset_factory(Candidate, form=CandidateForm, extra=0)
+    
     if request.method == "POST":
         event_form = VotingEventForm(request.POST)
         candidate_formset = CandidateFormSet(request.POST, request.FILES)
 
         if event_form.is_valid() and candidate_formset.is_valid():
-            voting_event = event_form.save(commit=False)
-            voting_event.created_by = request.user
+            # Ensure at least two candidates are provided
+            if candidate_formset.total_form_count() < 2:
+                candidate_formset.non_form_errors().append(
+                    ValidationError("* You must add at least 2 candidates.")
+                )
+            else:
+                # Proceed with saving the event
+                voting_event = event_form.save(commit=False)
+                voting_event.created_by = request.user
 
-            # Get User Input Datetime and Timezone
-            voting_event.start_time = event_form.cleaned_data['start_time']
-            voting_event.end_time = event_form.cleaned_data['end_time']
-            user_timezone = request.user.profile.timezone
+                # Get User Input Datetime and Timezone
+                voting_event.start_time = event_form.cleaned_data['start_time']
+                voting_event.end_time = event_form.cleaned_data['end_time']
+                user_timezone = request.user.profile.timezone
 
-            # Format Datetime to user local time
-            formatter = DatetimeFormatter(voting_event, user_timezone)
-            voting_event = formatter.set_user_time()
+                # Format Datetime to user local time
+                formatter = DatetimeFormatter(voting_event, user_timezone)
+                voting_event = formatter.set_user_time()
 
-            # Convert user local time to system time (UTC)
-            formatter = DatetimeFormatter(voting_event)
-            voting_event = formatter.get_system_time()
+                # Convert user local time to system time (UTC)
+                formatter = DatetimeFormatter(voting_event)
+                voting_event = formatter.get_system_time()
 
-            if voting_event.is_private:
-                voting_event.event_token = generate_unique_token()
+                if voting_event.is_private:
+                    voting_event.event_token = generate_unique_token()
 
-            # Save the voting event
-            voting_event.save()
+                # Save the voting event
+                voting_event.save()
 
-            # Assign categories to the voting event
-            selected_categories = event_form.cleaned_data["categories"]
-            voting_event.categories.set(selected_categories)
+                # Assign categories to the voting event
+                selected_categories = event_form.cleaned_data["categories"]
+                voting_event.categories.set(selected_categories)
 
-            # Save each candidate related to the voting event
-            for form in candidate_formset:
-                candidate = form.save(commit=False)
-                candidate.voting_event = voting_event
-                candidate.save()
+                # Save each candidate related to the voting event
+                for form in candidate_formset:
+                    candidate = form.save(commit=False)
+                    candidate.voting_event = voting_event
+                    candidate.save()
 
-            # Redirect to event detail page
-            return redirect("voting:event_detail_by_id", event_id=voting_event.id)
+                # Redirect to event detail page
+                return redirect("voting:event_detail_by_id", event_id=voting_event.id)
+        else:
+            # Handle form errors
+            pass
     else:
         event_form = VotingEventForm()
         candidate_formset = CandidateFormSet(queryset=Candidate.objects.none())
@@ -370,3 +381,4 @@ def delete_event(request, event_id):
     event = get_object_or_404(VotingEvent, id=event_id)
     event.delete()
     return redirect('voting:my_events')
+
