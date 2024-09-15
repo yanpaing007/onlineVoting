@@ -3,6 +3,7 @@ from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.forms import ValidationError, modelformset_factory
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.utils.crypto import get_random_string
@@ -67,6 +68,26 @@ def event_status(event, now):
     
     return None
 
+
+def get_event_status(request, event_id):
+    voting_event = get_object_or_404(VotingEvent, id=event_id)
+    now = timezone.now()
+    
+    status = event_status(voting_event, now)
+    if status == 'upcoming':
+        time_remaining = voting_event.start_time - now
+        total_seconds = int(time_remaining.total_seconds())
+    elif status == 'ongoing':
+        time_remaining = voting_event.end_time - now
+        total_seconds = int(time_remaining.total_seconds())
+    else:
+        total_seconds = 0
+
+    return JsonResponse({
+        'status': status,
+        'total_seconds': total_seconds,
+    })
+
 # Generate a unique token for private events
 def generate_unique_token():
     while True:
@@ -83,7 +104,7 @@ def create_event(request):
     if request.method == "POST":
         event_form = VotingEventForm(request.POST)
         candidate_formset = CandidateFormSet(request.POST, request.FILES)
-
+        print(candidate_formset)
         if event_form.is_valid() and candidate_formset.is_valid():
             # Ensure at least two candidates are provided
             if candidate_formset.total_form_count() < 2:
@@ -120,9 +141,10 @@ def create_event(request):
 
                 # Save each candidate related to the voting event
                 for form in candidate_formset:
-                    candidate = form.save(commit=False)
-                    candidate.voting_event = voting_event
-                    candidate.save()
+                    if form.is_valid() and form.cleaned_data.get('name'):
+                      candidate = form.save(commit=False)
+                      candidate.voting_event = voting_event
+                      candidate.save()
 
                 # Redirect to event detail page
                 return redirect("voting:event_detail_by_id", event_id=voting_event.id)
@@ -161,14 +183,12 @@ def event_detail(request, event_id=None, event_token=None):
     is_favorited = Favorite.objects.filter(user=request.user, event=voting_event).exists()
 
     if request.method == "POST" and 'favorite' in request.POST:
-        # Handle adding/removing favorites
         if is_favorited:
             Favorite.objects.filter(user=request.user, event=voting_event).delete()
         else:
             Favorite.objects.create(user=request.user, event=voting_event)
         return redirect('voting:event_detail_by_id', event_id=voting_event.id)
-    
-    
+
     candidates = voting_event.candidates.all()
     user_vote = Vote.objects.filter(voting_event=voting_event, voter=request.user).first()
     voted_candidate = user_vote.candidate if user_vote else None
@@ -185,7 +205,7 @@ def event_detail(request, event_id=None, event_token=None):
         "event": voting_event,
         "candidates": candidates,
         "voted_candidate": voted_candidate,
-        "status": status,
+        "status": status,  # Ensure this is a string value
         "total_seconds": total_seconds,
         'is_favorited': is_favorited,
     }
