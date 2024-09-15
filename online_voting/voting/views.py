@@ -1,3 +1,4 @@
+import random
 import time
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
@@ -69,6 +70,8 @@ def event_status(event, now):
     return None
 
 
+
+
 def get_event_status(request, event_id):
     voting_event = get_object_or_404(VotingEvent, id=event_id)
     now = timezone.now()
@@ -94,6 +97,7 @@ def generate_unique_token():
         token = get_random_string(10)
         if not VotingEvent.objects.filter(event_token=token).exists():
             return token
+        
 
 
 # Create a new voting event
@@ -250,10 +254,19 @@ def vote_result(request, event_id):
 
 
 # See events by filtering them
+@login_required
 def event_list(request):
     user_timezone = request.user.profile.timezone
     now = timezone.now()
     categories = Category.objects.all()
+    category_colors = {
+        'Music': '#ff5733',  # Example color
+        'Ok': '#33ff57',
+        'Category 3': '#3357ff',
+        # Add more categories and their respective colors here
+    }
+    for category in categories:
+        category.color = category_colors.get(category.name, '#6c757d')  # Default color if not found
     all_events = VotingEvent.objects.filter(is_private=False)
 
     ongoing_events = all_events.filter(start_time__lte=now, end_time__gte=now)

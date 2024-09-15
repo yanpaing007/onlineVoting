@@ -1,6 +1,6 @@
 {% extends 'voting/base.html' %}
 
-{% load crispy_forms_tags %}
+{% load crispy_forms_tags %}  {# Load crispy forms template tags #}
 
 {% block title %}Create Event{% endblock %}
 
@@ -9,22 +9,25 @@
 <form method="post" enctype="multipart/form-data">
     <div id="event_form">
         {% csrf_token %}
-        {{ event_form|crispy }}
+        {{ event_form|crispy }}  {# Render the event form using Crispy Forms #}
     </div>
     <h3>Candidates</h3>
     {{ candidate_formset.management_form }}
     <div id="candidate-container" class="row">
+        <!-- Reusable candidate form input -->
         <div id="candidate-input-form" class="col-md-3 d-none">
             <div class="card mb-3">
                 <div class="card-body">
-                    {{ candidate_formset.empty_form.name|as_crispy_field }}
-                    {{ candidate_formset.empty_form.description|as_crispy_field }}
+                    {{ candidate_formset.empty_form.name|as_crispy_field }}  {# Render the name field with Crispy Forms #}
+                    {{ candidate_formset.empty_form.description|as_crispy_field }}  {# Render the description field #}
+                    
                     <div class="form-group">
-                        {{ candidate_formset.empty_form.profile_pic|as_crispy_field }}
+                        {{ candidate_formset.empty_form.profile_pic|as_crispy_field }}  {# Render the profile picture field #}
                     </div>
                 </div>
             </div>
         </div>
+        <!-- Render initial formset forms if they exist -->
         {% for form in candidate_formset.forms %}
         <div class="col-md-3 candidate-form">
             <div class="card mb-3">
@@ -41,26 +44,12 @@
     </div>
     <button type="button" id="add" class="btn btn-secondary">Add Candidate</button>
     <button type="submit" class="btn btn-primary">Save Event</button>
-    <!-- Error Container -->
-    <div id="error-messages" class="text-danger text-small mt-3" style="display: none;">
-        {% for error in candidate_formset.non_form_errors %}
-            <div>{{ error }}</div>
-        {% endfor %}
-    </div>
 </form>
 {% endblock %}
 
 {% block scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const errorMessages = document.getElementById('error-messages');
-
-        // Check if there are errors and scroll to the bottom if errors are present
-        if (errorMessages && errorMessages.innerText.trim() !== '') {
-            window.scrollTo(0, document.body.scrollHeight);
-            errorMessages.style.display = 'block';
-        }
-
         const candidateContainer = document.getElementById('candidate-container');
         const totalForms = document.getElementById('id_form-TOTAL_FORMS');
         const addButton = document.getElementById('add');
@@ -101,16 +90,6 @@
             }
         });
     });
-
-    document.addEventListener('DOMContentLoaded', function() {
-    const errorMessages = document.getElementById('error-messages');
-
-    // Check if there are errors and scroll to the bottom if errors are present
-    if (errorMessages && errorMessages.innerText.trim() !== '') {
-        window.scrollTo(0, document.body.scrollHeight);
-        errorMessages.style.display = 'block';
-    }
-});
 </script>
 {% endblock %}
 
