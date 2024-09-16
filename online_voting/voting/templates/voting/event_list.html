@@ -5,7 +5,7 @@
 {% block content %}
 <h2>Events in {{ selected_category.name }}</h2>
 
-{% if events %}
+<!-- {% if events %}
     <ul class="list-group">
         {% for event in events %}
             <li class="list-group-item">
@@ -17,5 +17,44 @@
     </ul>
 {% else %}
     <p>No events available in this category.</p>
+{% endif %} -->
+
+{% if events %}
+<div class="row">
+    {% for event in events %}
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white">
+                <h5 class="card-title mb-0">
+                    <a href="{% url 'voting:event_detail_by_id' event_id=event.id %}" class="text-decoration-none text-white">
+                        {{ event.event_name }}
+                    </a>
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text text-muted">
+                    <i class="bi bi-person"></i> Created By: {{ event.created_by.username }}
+                </p>
+                <p class="card-text text-muted">
+                    <i class="bi bi-calendar"></i> Starts: {{ event.start_time|date:"M d, Y H:i" }}
+                </p>
+                <div>
+                    {% for category in event.categories.all %}
+                    <span class="badge rounded-pill bg-secondary">{{ category.name }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="card-footer text-muted">
+                <a href="{% url 'voting:event_detail_by_id' event_id=event.id %}" class="btn btn-outline-primary btn-sm">View Details</a>
+            </div>
+        </div>
+    </div>
+{% empty %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                No upcoming events available.
+            </div>
+        </div>
+{% endfor %}
 {% endif %}
 {% endblock %}

@@ -29,7 +29,7 @@
     </div>
     <div class="row">
         <!-- Sidebar (Categories) -->
-        <aside class="col-lg-3 col-md-4 mb-4">
+        <aside class="col-lg-2 col-md-3 mb-4">
             <h5 class="categories-heading">
                 <i class="bi bi-tags"></i> Categories
             </h5>
@@ -37,11 +37,13 @@
             {% if categories %}
                 <div class="d-flex flex-wrap">
                     {% for category in categories %}
+                    <a href="{% url 'voting:sort_by_category' category.name %}">
                     <div class="p-1">
                         <span class="badge rounded-pill category-badge" style="background-color: {{ category.color }};">
                             {{ category.name }}
+
                         </span>
-                    </div>
+                    </div></a>
                     {% endfor %}
                 </div>
             {% else %}
@@ -51,34 +53,39 @@
     </aside>
 
         <!-- Event Display Area -->
-        <div class="col-lg-9 col-md-8">
+        <div class="col-lg-10 col-md-9">
             <div class="tab-content" id="eventTabsContent">
                 <!-- Ongoing Events Tab -->
                 <div class="tab-pane fade show active" id="ongoing" role="tabpanel" aria-labelledby="ongoing-events-tab">
                     <div class="row">
                         {% for event in ongoing_events %}
-                            <div class="col-md-6 mb-4">
-                                <div class="card shadow-sm">
-                                    <div class="card-body">
-                                        <h5 class="card-title">
-                                            <a href="{% url 'voting:event_detail_by_id' event_id=event.id %}" class="text-decoration-none text-dark">
-                                                {{ event.event_name }}
-                                            </a>
-                                        </h5>
-                                        <p class="card-text text-muted">
-                                            Created By: {{ event.created_by.username }}
-                                        </p>
-                                        <p class="card-text text-muted">
-                                            Starts: {{ event.start_time|date:"M d, Y H:i" }}
-                                        </p>
-                                        <div>
-                                            {% for category in event.categories.all %}
-                                            <span class="badge rounded-pill bg-secondary">{{ category.name }}</span>
-                                            {% endfor %}
-                                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="card shadow-sm">
+                                <div class="card-header bg-dark text-white">
+                                    <h5 class="card-title mb-0">
+                                        <a href="{% url 'voting:event_detail_by_id' event_id=event.id %}" class="text-decoration-none text-white">
+                                            {{ event.event_name }}
+                                        </a>
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text text-muted">
+                                        <i class="bi bi-person"></i> Created By: {{ event.created_by.username }}
+                                    </p>
+                                    <p class="card-text text-muted">
+                                        <i class="bi bi-calendar"></i> Starts: {{ event.start_time|date:"M d, Y H:i" }}
+                                    </p>
+                                    <div>
+                                        {% for category in event.categories.all %}
+                                        <span class="badge rounded-pill bg-secondary">{{ category.name }}</span>
+                                        {% endfor %}
                                     </div>
                                 </div>
+                                <div class="card-footer text-muted">
+                                    <a href="{% url 'voting:event_detail_by_id' event_id=event.id %}" class="btn btn-outline-primary btn-sm">View Details</a>
+                                </div>
                             </div>
+                        </div>
                         {% empty %}
                             <div class="col-12">
                                 <div class="alert alert-info text-center">
@@ -93,28 +100,33 @@
                <div class="tab-pane fade" id="upcoming" role="tabpanel" aria-labelledby="upcoming-events-tab">
                 <div class="row">
                     {% for event in upcoming_events %}
-                        <div class="col-md-6 mb-4">
-                            <div class="card shadow-sm">
-                                <div class="card-body">
-                                    <h5 class="card-title">
-                                        <a href="{% url 'voting:event_detail_by_id' event_id=event.id %}" class="text-decoration-none text-dark">
-                                            {{ event.event_name }}
-                                        </a>
-                                    </h5>
-                                    <p class="card-text text-muted">
-                                        Created By: {{ event.created_by.username }}
-                                    </p>
-                                    <p class="card-text text-muted">
-                                        Starts: {{ event.start_time|date:"M d, Y H:i" }}
-                                    </p>
-                                    <div>
-                                        {% for category in event.categories.all %}
-                                        <span class="badge rounded-pill bg-secondary">{{ category.name }}</span>
-                                        {% endfor %}
-                                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-dark text-white">
+                                <h5 class="card-title mb-0">
+                                    <a href="{% url 'voting:event_detail_by_id' event_id=event.id %}" class="text-decoration-none text-white">
+                                        {{ event.event_name }}
+                                    </a>
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text text-muted">
+                                    <i class="bi bi-person"></i> Created By: {{ event.created_by.username }}
+                                </p>
+                                <p class="card-text text-muted">
+                                    <i class="bi bi-calendar"></i> Starts: {{ event.start_time|date:"M d, Y H:i" }}
+                                </p>
+                                <div>
+                                    {% for category in event.categories.all %}
+                                    <span class="badge rounded-pill bg-secondary">{{ category.name }}</span>
+                                    {% endfor %}
                                 </div>
                             </div>
+                            <div class="card-footer text-muted">
+                                <a href="{% url 'voting:event_detail_by_id' event_id=event.id %}" class="btn btn-outline-primary btn-sm">View Details</a>
+                            </div>
                         </div>
+                    </div>
                     {% empty %}
                         <div class="col-12">
                             <div class="alert alert-info text-center">
@@ -130,28 +142,33 @@
                 <div class="tab-pane fade" id="previous" role="tabpanel" aria-labelledby="previous-events-tab">
                     <div class="row">
                         {% for event in previous_events %}
-                            <div class="col-lg-6 mb-4">
-                                <div class="card shadow-sm">
-                                    <div class="card-body">
-                                        <h5 class="card-title">
-                                            <a href="{% url 'voting:event_detail_by_id' event_id=event.id %}" class="text-decoration-none text-dark">
-                                                {{ event.event_name }}
-                                            </a>
-                                        </h5>
-                                        <p class="card-text text-muted">
-                                            Created By: {{ event.created_by.username }}
-                                        </p>
-                                        <p class="card-text text-muted">
-                                            Ended: {{ event.end_time|date:"M d, Y H:i" }}
-                                        </p>
-                                        <div>
-                                            {% for category in event.categories.all %}
-                                            <span class="badge rounded-pill bg-secondary">{{ category.name }}</span>
-                                            {% endfor %}
-                                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="card shadow-sm">
+                                <div class="card-header bg-dark text-white">
+                                    <h5 class="card-title mb-0">
+                                        <a href="{% url 'voting:event_detail_by_id' event_id=event.id %}" class="text-decoration-none text-white">
+                                            {{ event.event_name }}
+                                        </a>
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text text-muted">
+                                        <i class="bi bi-person"></i> Created By: {{ event.created_by.username }}
+                                    </p>
+                                    <p class="card-text text-muted">
+                                        <i class="bi bi-calendar"></i> Starts: {{ event.start_time|date:"M d, Y H:i" }}
+                                    </p>
+                                    <div>
+                                        {% for category in event.categories.all %}
+                                        <span class="badge rounded-pill bg-secondary">{{ category.name }}</span>
+                                        {% endfor %}
                                     </div>
                                 </div>
+                                <div class="card-footer text-muted">
+                                    <a href="{% url 'voting:event_detail_by_id' event_id=event.id %}" class="btn btn-outline-primary btn-sm">View Details</a>
+                                </div>
                             </div>
+                        </div>
                         {% empty %}
                             <div class="col-12">
                                 <div class="alert alert-info text-center">

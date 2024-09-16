@@ -123,77 +123,27 @@
 
 {% block scripts %}
 <script>
-    let totalSeconds = {{ total_seconds }};
-    let hasReloaded = false; 
-
+    let totalSeconds = {{total_seconds}}; // This is not an error.
     function startCountdown() {
         const countdownElement = document.getElementById('countdown');
         const interval = setInterval(function() {
             if (totalSeconds <= 0) {
                 clearInterval(interval);
                 if (!hasReloaded) {
-                    // Only reload the page if status changed and not yet reloaded
-                    window.location.reload();
                     hasReloaded = true;
+                    window.location.reload();
                 }
-            } else {
-                const days = Math.floor(totalSeconds / 86400);
+            } 
+            else {
+                const days = Math.floor(totalSeconds / 86400)
                 const hours = Math.floor((totalSeconds % 86400) / 3600);
                 const minutes = Math.floor((totalSeconds % 3600) / 60);
                 const seconds = totalSeconds % 60;
-                countdownElement.innerHTML = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+                countdownElement.innerHTML = `${days}d ${hours}h ${minutes}m ${seconds}s`;               
                 totalSeconds--;
             }
-        }, 1000);
+        }, 1000); // 1 second interval.
     }
-
-    // Check event status every minute (60000 ms)
-    setInterval(checkEventStatus, 60000);
-
-    function checkEventStatus() {
-        // Use AJAX to periodically check the event status
-        const xhr = new XMLHttpRequest();
-        xhr.open('GET', '{% url "voting:event_status" event.id %}', true);
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                const response = JSON.parse(xhr.responseText);
-                if (response.status !== '{{ status }}') {
-                    // If the status has changed and the page hasn't been reloaded yet, reload the page
-                    if (!hasReloaded) {
-                        hasReloaded = true;
-                        window.location.reload();
-                    }
-                }
-                if (response.status === 'ended') {
-                    clearInterval(interval); // Stop the countdown loop
-                }
-            }
-        };
-        xhr.send();
-    }
-
-    function checkEventStatus() {
-        // Use AJAX to periodically check the event status
-        const xhr = new XMLHttpRequest();
-        xhr.open('GET', '{% url "voting:event_status" event.id %}', true);
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                const response = JSON.parse(xhr.responseText);
-                if (response.status !== '{{ status }}') {
-                    // If the status has changed and the page hasn't been reloaded yet, reload the page
-                    if (!hasReloaded) {
-                        hasReloaded = true;
-                        window.location.reload();
-                    }
-                }
-            }
-        };
-        xhr.send();
-    }
-
-    // Start the countdown
     startCountdown();
-    // Check event status every minute (60000 ms)
-    setInterval(checkEventStatus, 1000);
 </script>
-{% endblock %}
+{% endblock%}
