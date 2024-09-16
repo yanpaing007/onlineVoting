@@ -403,12 +403,12 @@ def event_by_category(request, cate):
     )
 
 def search_events(request):
-    user_timezone = request.user.profile.timezone
+    all_events = VotingEvent.objects.filter(is_private=False)
     query = request.GET.get('query')
     print(query)
     results = []
     if query and len(query) >= 3:
-        results = VotingEvent.objects.filter(event_name__icontains=query)
+        results = all_events.objects.filter(event_name__icontains=query)
     else:
         messages.error(request, "Invalid input")
         
