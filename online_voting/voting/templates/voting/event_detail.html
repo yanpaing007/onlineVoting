@@ -1,65 +1,65 @@
-{% extends 'voting/base.html' %} 
-{% block content %} 
+{% extends 'voting/base.html' %}
 
- 
-
+{% block content %}
 <div>
     <h2>{{ event.event_name }}</h2>
 </div>
+
 <form method="post">
     {% csrf_token %}
     <button type="submit" name="favorite" class="btn btn-warning mb-3">
         {% if is_favorited %}
-        <i class="bi bi-star-fill"></i> Unfavorite
+            <i class="bi bi-star-fill"></i> Unfavorite
         {% else %}
-        <i class="bi bi-star"></i> Add to Favorites
+            <i class="bi bi-star"></i> Add to Favorites
         {% endif %}
     </button>
 </form>
 
 <div class="container">
     <div class="row">
-      <div class="col-sm-2">
-        <strong>Event Status:</strong>
-      </div>
-      {% if status == 'ended' %}
-      <div class="col">
-        <p class="text-danger">This event has already ended.</p>
-      </div>
-      {% else %}
-      <div class="col">
-        <p>{{status}}</p>
-      </div>
-      {% endif %}
-    </div>
-    {% if status == 'ongoing' %}
-    <div class="row">
         <div class="col-sm-2">
-          <strong id ="label">Event ends in: </strong>
+            <strong>Event Status:</strong>
         </div>
-        <div class="col">
-          <p id="countdown"></p>
-        </div>
+        {% if status == 'ended' %}
+            <div class="col">
+                <p class="text-danger">This event has already ended.</p>
+            </div>
+        {% else %}
+            <div class="col">
+                <p>{{ status }}</p>
+            </div>
+        {% endif %}
     </div>
-    {% elif status == 'upcoming'%}
-    <div class="row">
-        <div class="col-sm-2">
-          <strong id ="label">Event starts in: </strong>
+
+    {% if status == 'ongoing' or status == 'upcoming' %}
+        <div class="row">
+            <div class="col-sm-2">
+                <strong id="label">
+                    {% if status == 'ongoing' %}
+                        Event ends in:
+                    {% else %}
+                        Event starts in:
+                    {% endif %}
+                </strong>
+            </div>
+            <div class="col">
+                <p id="countdown"></p>
+            </div>
         </div>
-        <div class="col">
-          <p id="countdown"></p>
-        </div>
-    </div>
     {% endif %}
-    {% if event.event_token != None %}
-    <div class="row mb-3">
-        <div class="col-sm-2">
-          <strong id ="label">Voting invite Link :</strong>
+
+    {% if event.event_token %}
+        <div class="row mb-3">
+            <div class="col-sm-2">
+                <strong id="label">Voting invite Link:</strong>
+            </div>
+            <div class="col">
+                <a href="http://127.0.0.1:8000/voting/event/token/{{ event.event_token }}" id="event_link">
+                    http://127.0.0.1:8000/voting/event/token/{{ event.event_token }}
+                </a>
+            </div>
         </div>
-        <div class="col">
-          <a href="http://127.0.0.1:8000/voting/event/token/{{event.event_token}}" id="event_link">http://127.0.0.1:8000/voting/event/token/{{event.event_token}}</a>
-        </div>
-    </div>
     {% endif %}
 </div>
 
@@ -68,58 +68,57 @@
 </div>
 
 <div>
-<form action="{% url 'voting:vote' event.id %}" method="post">
-    {% csrf_token %}
-    <div class="row mt-3 rounded-10">
-        {% for candidate in candidates %}
-        <div class="col-md-3">
- 
-            <div class="card mb-3 {% if candidate.id == voted_candidate.id %}border border-success{% endif %} ">
-                {% if candidate.profile_pic %}
-                <img src="{{ candidate.profile_pic.url }}" class="card-img-top img-fluid" style="
-            width: auto;
-            height: 300px;
-            object-fit: cover;
-            padding: 10px;
-            border: none;
-            border-radius: 20px;"
-             alt="{{ candidate.name }}" />
-                {% endif %}
-                <div class="card-body">
-                    <h5 class="card-title">{{ candidate.name }}</h5>
-                    <p class="card-text">{{ candidate.description }}</p>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" id="candidate_{{ candidate.id }}" name="candidate"
-                            value="{{ candidate.id }}" />
-                        <label class="form-check-label" for="candidate_{{ candidate.id }}">Vote</label>
+    <form action="{% url 'voting:vote' event.id %}" method="post">
+        {% csrf_token %}
+        <div class="row mt-3 rounded-10">
+            {% for candidate in candidates %}
+                <div class="col-md-3">
+                    <div class="card mb-3 {% if candidate.id == voted_candidate.id %}border border-success{% endif %}">
+                        {% if candidate.profile_pic %}
+                            <img src="{{ candidate.profile_pic.url }}" class="card-img-top img-fluid" style="
+                                width: auto;
+                                height: 300px;
+                                object-fit: cover;
+                                padding: 10px;
+                                border: none;
+                                border-radius: 20px;"
+                                alt="{{ candidate.name }}" />
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ candidate.name }}</h5>
+                            <p class="card-text">{{ candidate.description }}</p>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" id="candidate_{{ candidate.id }}" name="candidate" value="{{ candidate.id }}" />
+                                <label class="form-check-label" for="candidate_{{ candidate.id }}">Vote</label>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
+            {% endfor %}
         </div>
-        {% endfor %}
-    </div>
-    <div class="form-group form-check">
-        <input type="checkbox" class="form-check-input" id="anonymousVote" name="anonymousVote" {% if voted_candidate%}checked{% endif %}>
-        <label class="form-check-label" for="anonymousVote">Vote anonymously</label>
-    </div>
-    {% if status == 'ongoing' %}
-    <button type="submit" class="btn btn-primary mt-4">Cast Your Vote</button>
-    <a href="{% url 'voting:vote_result' event_id=event.id %}">
-        <button type="button" class="btn btn-success mt-4">View Result</button>
-    </a>
-    {% elif status == 'upcoming' %}
-    <button type="submit" class="btn btn-primary mt-4 disabled">Cast Your Vote</button>
-    <a href="{% url 'voting:vote_result' event_id=event.id %}">
-        <button type="button" class="btn btn-success mt-4 disabled">View Result</button>
-    </a>
-    {% elif status == 'ended' %}
-    <button type="submit" class="btn btn-primary mt-4 disabled">Cast Your Vote</button>
-    <a href="{% url 'voting:vote_result' event_id=event.id %}">
-        <button type="button" class="btn btn-success mt-4">View Result</button>
-    </a>
-    {% endif %}
-</form>
+        <div class="form-group form-check">
+            <input type="checkbox" class="form-check-input" id="anonymousVote" name="anonymousVote" {% if voted_candidate %}checked{% endif %}>
+            <label class="form-check-label" for="anonymousVote">Vote anonymously</label>
+        </div>
+        {% if status == 'ongoing' %}
+            <button type="submit" class="btn btn-primary mt-4">Cast Your Vote</button>
+            <a href="{% url 'voting:vote_result' event_id=event.id %}">
+                <button type="button" class="btn btn-success mt-4">View Result</button>
+            </a>
+        {% elif status == 'upcoming' %}
+            <button type="submit" class="btn btn-primary mt-4 disabled">Cast Your Vote</button>
+            <a href="{% url 'voting:vote_result' event_id=event.id %}">
+                <button type="button" class="btn btn-success mt-4 disabled">View Result</button>
+            </a>
+        {% elif status == 'ended' %}
+            <button type="submit" class="btn btn-primary mt-4 disabled">Cast Your Vote</button>
+            <a href="{% url 'voting:vote_result' event_id=event.id %}">
+                <button type="button" class="btn btn-success mt-4">View Result</button>
+            </a>
+        {% endif %}
+    </form>
 </div>
+
 {% endblock %}
 
 {% block scripts %}

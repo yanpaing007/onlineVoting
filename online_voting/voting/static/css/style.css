@@ -1,0 +1,179 @@
+/* style.css */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f8f9fa;
+    color: #343a40;
+}
+
+.navbar-brand {
+    font-size: 1.25rem;
+    font-weight: bold;
+}
+
+.navbar-nav .nav-link {
+    font-size: 1.1rem;
+    margin : 0 0.5rem;
+    padding: 0.75rem 1rem;
+    transition: color 0.3s;
+    background-color: 0.3s;
+    color: rgb(249, 248, 248);
+    
+}
+
+.navbar-nav .nav-item {
+    display: flex;
+    align-items: center;
+}
+
+
+.profile-picture {
+    width: 40px; /* Adjust width as needed */
+    height: 40px; /* Adjust height as needed */
+    object-fit: cover; /* Ensure the image covers the area without distortion */
+    margin-right: 8px; /* Optional: Add some space between the image and the dropdown arrow */
+}
+
+
+
+.navbar-nav .dropdown-menu {
+    border-radius: 0.5rem;
+}
+
+.search-input {
+    border: none;
+    border-bottom: none;
+    border-radius: 0;
+    color: grey;
+    padding-right: 3.5rem; /* Space for the search icon */
+}
+
+.search-btn {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    border: none;
+    background-color: #007bff;
+    padding: 0.5rem;
+    cursor: pointer;
+}
+
+
+.search-btn:hover {
+    background-color: #0056b3;
+}
+
+.search-btn i {
+    font-size: 1.2rem;
+    color: white;
+}
+
+.search-input:focus {
+    outline: none;
+    border: none;
+}
+
+
+
+.form-control {
+    border-radius: 5px;
+}
+
+.input-group {
+    margin-right: 0; /* Ensure no margin between input groups */
+}
+
+.input-group .btn {
+    margin-left: 0; /* Ensure no margin between button and input */
+}
+
+/* styles.css */
+.category-badge {
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
+    margin-bottom: 0.5rem;
+    display: inline-block;
+    color: #fff;
+}
+
+
+/* styles.css */
+.categories-heading {
+    font-size: 1.5rem;
+    font-weight: bold;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid #007bff; /* Bootstrap primary color */
+    display: flex;
+    align-items: center;
+}
+
+.categories-heading i {
+    margin-right: 0.5rem;
+    color: #007bff; /* Bootstrap primary color */
+}
+
+/* styles.css */
+.custom-tabs .nav-link {
+    font-size: 1.1rem;
+    font-weight: bold;
+    padding: 0.75rem 1.25rem;
+    color: #007bff;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.custom-tabs .nav-link.active {
+    background-color: #007bff;
+    color: #fff;
+    border-color: #007bff;
+}
+
+.custom-tabs .nav-link:hover {
+    background-color: #e9ecef;
+    color: #0056b3;
+}
+
+.custom-tabs .nav-link i {
+    margin-right: 0.5rem;
+}
+
+.tab-content .tab-pane {
+    animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+
+/* style.css */
+.card-title a {
+    color: #fff;
+    transition: color 0.3s;
+}
+
+.card-title a:hover {
+    color: #e9ecef;
+    text-decoration: none;
+}
+
+.card-text {
+    margin-bottom: 0.5rem;
+}
+
+.badge {
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.category-link {
+    text-decoration: none;
+    color: inherit; /* Ensure the link inherits the color of the parent element */
+}

@@ -5,23 +5,31 @@
 
 {% block content %}
 <!-- Container for the tabs and event details -->
-<div class="container my-4">
-    <div class="row">
-        <!-- Tabs for Event Details -->
-        <div class="col-12 mb-4">
-            <ul class="nav nav-tabs" id="eventTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <a class="nav-link active" id="created-events-tab" data-bs-toggle="tab" href="#created-events" role="tab" aria-controls="created-events" aria-selected="true">Created Events</a>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <a class="nav-link" id="voted-events-tab" data-bs-toggle="tab" href="#voted-events" role="tab" aria-controls="voted-events" aria-selected="false">Voted Events</a>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <a class="nav-link" id="favorite-events-tab" data-bs-toggle="tab" href="#favorite-events" role="tab" aria-controls="favorite-events" aria-selected="false">Favorite Events</a>
-                </li>
-            </ul>
+
+
+    <div class="container my-4">
+        <div class="row">
+            <!-- Tabs for Event Filtering -->
+            <div class="col-12 mb-4">
+                <ul class="nav nav-tabs custom-tabs" id="eventTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link active" id="created-events-tab" data-bs-toggle="tab" href="#created-events" role="tab" aria-controls="created-events" aria-selected="true">
+                            <i class="bi bi-calendar-check"></i> Created Events
+                        </a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link" id="voted-events-tab" data-bs-toggle="tab" href="#voted-events" role="tab" aria-controls="voted-events" aria-selected="false">
+                            <i class="bi bi-calendar-event"></i> Voted Events
+                        </a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link" id="favorite-events-tab" data-bs-toggle="tab" href="#favorite-events" role="tab" aria-controls="favorite-events" aria-selected="false">
+                            <i class="fas fa-star"></i> Favorite Events
+                        </a>
+                    </li>
+                </ul>
+            </div>
         </div>
-    </div>
     <div class="row">
         <!-- Event Details Tabs Content -->
         <div class="col-12">
@@ -30,20 +38,32 @@
                 <div class="tab-pane fade show active" id="created-events" role="tabpanel" aria-labelledby="created-events-tab">
                     <h2>Created Events</h2>
                     {% if events %}
-                        <ul class="list-group">
+                        <div class="row">
                             {% for event in events %}
-                                <li class="list-group-item mt-2 mb-2 rounded-2">
-                                    <a href="{% url 'voting:event_detail_by_id' event.id %}">{{ event.event_name }}</a>
-                                    <p>{{ event.start_time }} - {{ event.end_time }}</p>
-                                     <!-- Assuming you have a 'creator' field in your model -->
-                                        <form action="{% url 'voting:delete_event' event.id %}" method="post" style="display:inline;">
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                                        </form>
-                                   
-                                </li>
+                                <div class="col-lg-4 col-md-6 mb-4">
+                                    <div class="card shadow-sm">
+                                        <div class="card-body">
+                                            <div class="card-header bg-dark text-white">
+                                                <h5 class="mb-0">
+                                                    <a href="{% url 'voting:event_detail_by_id' event.id %}" class="text-decoration-none text-white">
+                                                        {{ event.event_name }}
+                                                    </a>
+                                                </h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <p class="card-text text-muted">
+                                                    <i class="bi bi-calendar"></i> {{ event.start_time }} - {{ event.end_time }}
+                                                </p>
+                                                <form action="{% url 'voting:delete_event' event.id %}" method="post" style="display:inline;">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             {% endfor %}
-                        </ul>
+                        </div>
                     {% else %}
                         <p>No events created yet.</p>
                     {% endif %}
@@ -53,16 +73,28 @@
                 <div class="tab-pane fade" id="voted-events" role="tabpanel" aria-labelledby="voted-events-tab">
                     <h2>Voted Events</h2>
                     {% if voted_events %}
-                        <ul class="list-group">
+                        <div class="row">
                             {% for event in voted_events %}
-                                <li class="list-group-item mt-2 mb-2 rounded-2">
-                                    <a href="{% url 'voting:event_detail_by_id' event.id %}">{{ event.event_name }}</a>
-                                    <p>{{ event.start_time }} - {{ event.end_time }}</p>
-                                </li>
+                                <div class="col-lg-4 col-md-6 mb-4">
+                                    <div class="card shadow-sm">
+                                        <div class="card-header bg-success text-white">
+                                            <h5 class="mb-0">
+                                                <a href="{% url 'voting:event_detail_by_id' event.id %}" class="text-decoration-none text-white">
+                                                    {{ event.event_name }}
+                                                </a>
+                                            </h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <p class="card-text text-muted">
+                                                <i class="bi bi-calendar"></i> {{ event.start_time }} - {{ event.end_time }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
                             {% endfor %}
-                        </ul>
+                        </div>
                     {% else %}
-                        <p>No events voted yet.</p>
+                        <p>No voted events yet.</p>
                     {% endif %}
                 </div>
 
@@ -70,16 +102,28 @@
                 <div class="tab-pane fade" id="favorite-events" role="tabpanel" aria-labelledby="favorite-events-tab">
                     <h2>Favorite Events</h2>
                     {% if favorites %}
-                        <ul class="list-group">
-                            {% for favorite in favorites %}
-                                <li class="list-group-item mt-2 mb-2 rounded-2">
-                                    <a href="{% url 'voting:event_detail_by_id' favorite.event.id %}">{{ favorite.event.event_name }}</a>
-                                    <p>Starts: {{ favorite.event.start_time|date:"F j, Y, g:i a" }}</p>
-                                </li>
+                        <div class="row">
+                            {% for event in favorites %}
+                                <div class="col-lg-4 col-md-6 mb-4">
+                                    <div class="card shadow-sm">
+                                        <div class="card-header bg-dark text-white">
+                                            <h5 class="mb-0">
+                                                <a href="{% url 'voting:event_detail_by_id' event.id %}" class="text-decoration-none text-white">
+                                                    {{ event.event.event_name }}
+                                                </a>
+                                            </h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <p class="card-text text-muted">
+                                                <i class="bi bi-calendar"></i> {{ event.event.start_time }} - {{ event.event.end_time }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
                             {% endfor %}
-                        </ul>
+                        </div>
                     {% else %}
-                        <p>You have no favorite events yet.</p>
+                        <p>No favorite events yet.</p>
                     {% endif %}
                 </div>
             </div>
