@@ -103,19 +103,19 @@
                     <h2>Favorite Events</h2>
                     {% if favorites %}
                         <div class="row">
-                            {% for event in favorites %}
+                            {% for favorite in favorites %}
                                 <div class="col-lg-4 col-md-6 mb-4">
                                     <div class="card shadow-sm">
                                         <div class="card-header bg-dark text-white">
                                             <h5 class="mb-0">
-                                                <a href="{% url 'voting:event_detail_by_id' event.id %}" class="text-decoration-none text-white">
-                                                    {{ event.event.event_name }}
+                                                <a href="{% url 'voting:event_detail_by_id' favorite.event.id %}" class="text-decoration-none text-white">
+                                                    {{ favorite.event.event_name }}
                                                 </a>
                                             </h5>
                                         </div>
                                         <div class="card-body">
                                             <p class="card-text text-muted">
-                                                <i class="bi bi-calendar"></i> {{ event.event.start_time }} - {{ event.event.end_time }}
+                                                <i class="bi bi-calendar"></i> {{ favorite.event.start_time }} - {{ favorite.event.end_time }}
                                             </p>
                                         </div>
                                     </div>

@@ -5,7 +5,7 @@
 
 
 {% if results %}
-<div class="row">
+  <div class="row">
     {% for event in results %}
     <div class="col-md-6 mb-4">
         <div class="card shadow-sm">
@@ -34,13 +34,13 @@
             </div>
         </div>
     </div>
-{% empty %}
+    {% empty %}
         <div class="col-12">
             <div class="alert alert-info text-center">
                 Results not found.
             </div>
         </div>
-{% endfor %}
+    {% endfor %}
 {% endif %}
 
 {% endblock %}

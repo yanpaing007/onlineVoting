@@ -64,41 +64,47 @@
 </div>
 
 <div>
-    <h3>Candidates:</h3>
+    <h3>Candidates</h3>
 </div>
 
 <div>
     <form action="{% url 'voting:vote' event.id %}" method="post">
         {% csrf_token %}
         <div class="row mt-3 rounded-10">
-            {% for candidate in candidates %}
-                <div class="col-md-3">
-                    <div class="card mb-3 {% if candidate.id == voted_candidate.id %}border border-success{% endif %}">
-                        {% if candidate.profile_pic %}
-                            <img src="{{ candidate.profile_pic.url }}" class="card-img-top img-fluid" style="
-                                width: auto;
-                                height: 300px;
-                                object-fit: cover;
-                                padding: 10px;
-                                border: none;
-                                border-radius: 20px;"
-                                alt="{{ candidate.name }}" />
-                        {% endif %}
-                        <div class="card-body">
-                            <h5 class="card-title">{{ candidate.name }}</h5>
-                            <p class="card-text">{{ candidate.description }}</p>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" id="candidate_{{ candidate.id }}" name="candidate" value="{{ candidate.id }}" />
-                                <label class="form-check-label" for="candidate_{{ candidate.id }}">Vote</label>
+            <div class="col-12">
+                <div class="d-flex flex-wrap overflow-auto" style="max-height: 600px; overflow-y: auto;">
+                    {% for candidate in candidates %}
+                        <div class="col-md-4 mb-3 p-2">
+                            <div class="card {% if candidate.id == voted_candidate.id %}border border-success{% endif %}" style="min-width: 250px;">
+                                {% if candidate.profile_pic %}
+                                    <img src="{{ candidate.profile_pic.url }}" class="card-img-top img-fluid" style="
+                                        width: auto;
+                                        height: 300px;
+                                        object-fit: cover;
+                                        padding: 10px;
+                                        border: none;
+                                        border-radius: 20px;"
+                                        alt="{{ candidate.name }}" />
+                                {% endif %}
+                                <div class="card-body">
+                                    <h5 class="card-title text-bold">{{ candidate.name }}</h5>
+                                    <p class="card-text text-muted" style="max-height: 200px; overflow-y: auto;">
+                                        {{ candidate.description }}
+                                    </p>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" id="candidate_{{ candidate.id }}" name="candidate" value="{{ candidate.id }}" />
+                                        <label class="form-check-label" for="candidate_{{ candidate.id }}">Vote</label>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    {% endfor %}
                 </div>
-            {% endfor %}
+            </div>
         </div>
-        <div class="form-group form-check">
+        <div class="form-group form-check mt-3">
             <input type="checkbox" class="form-check-input" id="anonymousVote" name="anonymousVote" {% if voted_candidate %}checked{% endif %}>
-            <label class="form-check-label" for="anonymousVote">Vote anonymously</label>
+            <label class="form-check-label text-bold" for="anonymousVote">Vote anonymously</label>
         </div>
         {% if status == 'ongoing' %}
             <button type="submit" class="btn btn-primary mt-4">Cast Your Vote</button>
