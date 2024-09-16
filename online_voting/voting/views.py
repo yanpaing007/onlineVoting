@@ -261,8 +261,13 @@ def event_list(request):
     categories = Category.objects.all()
     category_colors = {
         'Music': '#ff5733',  # Example color
-        'Ok': '#33ff57',
-        'Category 3': '#3357ff',
+        'Travel': '#33ff57',
+        'Automobile': '#3357ff',
+        'Mobile': 'blue',
+        'Animations': 'cyan',
+        'Movies': 'maroon',
+        'Entertainment': 'red',
+        'Food and drinks': 'lightgreen'
         # Add more categories and their respective colors here
     }
     for category in categories:

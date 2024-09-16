@@ -87,9 +87,10 @@
                         <div class="card-body">
                             <h5 class="card-title">{{ candidate.name }}</h5>
                             <p class="card-text">{{ candidate.description }}</p>
+                            <br>
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" id="candidate_{{ candidate.id }}" name="candidate" value="{{ candidate.id }}" />
-                                <label class="form-check-label" for="candidate_{{ candidate.id }}">Vote</label>
+                                <label class="form-check-label" for="candidate_{{ candidate.id }}"><b>Vote</b></label>
                             </div>
                         </div>
                     </div>

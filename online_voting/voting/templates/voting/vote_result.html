@@ -3,7 +3,12 @@
 {% block title %}Voting Results{% endblock %}
 
 {% block content %}
-<h2>Results for {{ event.event_name }}</h2>
+
+{% if status == 'ongoing' %}
+<h2>Ongoing Results for <b>{{ event.event_name }}</b></h2>
+{% else %}
+<h2>Final Results for <b>{{ event.event_name }}</b></h2>
+{% endif %}
 
 <div class="container mt-4">
     <div class="row">
