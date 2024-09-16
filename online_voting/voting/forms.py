@@ -28,6 +28,9 @@ class CandidateForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'class': 'form-control'}),
             'profile_pic': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['name'].required = True
 
 
 class VoteForm(forms.ModelForm):

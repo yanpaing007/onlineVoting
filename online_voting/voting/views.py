@@ -82,7 +82,7 @@ def create_event(request):
     if request.method == "POST":
         event_form = VotingEventForm(request.POST)
         candidate_formset = CandidateFormSet(request.POST, request.FILES)
-
+        
         if event_form.is_valid() and candidate_formset.is_valid():
             voting_event = event_form.save(commit=False)
             voting_event.created_by = request.user
@@ -145,8 +145,7 @@ def event_detail(request, event_id=None, event_token=None):
     elif event_token != None:
         # Fetch VotingEvent by event_token
         voting_event = get_object_or_404(VotingEvent, event_token=event_token)
-    
-    
+      
     is_favorited = Favorite.objects.filter(user=request.user, event=voting_event).exists()
 
     if request.method == "POST" and 'favorite' in request.POST:
@@ -156,8 +155,7 @@ def event_detail(request, event_id=None, event_token=None):
         else:
             Favorite.objects.create(user=request.user, event=voting_event)
         return redirect('voting:event_detail_by_id', event_id=voting_event.id)
-    
-    
+      
     candidates = voting_event.candidates.all()
     user_vote = Vote.objects.filter(voting_event=voting_event, voter=request.user).first()
     voted_candidate = user_vote.candidate if user_vote else None
@@ -219,6 +217,7 @@ def vote_result(request, event_id):
 
 
 # See events by filtering them
+@login_required
 def event_list(request):
     user_timezone = request.user.profile.timezone
     now = timezone.now()
