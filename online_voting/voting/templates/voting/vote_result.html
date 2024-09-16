@@ -19,12 +19,12 @@
                 <img src="{{ candidate.profile_pic.url }}" class="card-img-top" alt="{{ candidate.name }}" style="height: 200px; object-fit: cover;">
                 {% endif %}
                 <div class="card-body">
-                    <h5 class="card-title">{{ candidate.name }}</h5>
+                    <h5 class="card-title text-bold">{{ candidate.name }}</h5>
                     <p class="card-text">Total Votes: {{ candidate.votes.count }}</p>
-                    <h6>Latest Voters:</h6>
+                    <h6>Recently voted by:</h6>
                     <ul class="list-group">
-                        {% for vote in candidate.votes.all|slice:":10" %}
-                            <li class="list-group-item {% if vote.is_anonymous %}text-muted{% endif %}">
+                        {% for vote in candidate.votes.all|slice:":5" %}
+                            <li class="list-group-item">
                                 {% if vote.is_anonymous %}
                                     Anonymous
                                 {% else %}
