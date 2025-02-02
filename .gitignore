@@ -16,3 +16,4 @@ online_voting/db.sqlite3
 .vscode/
 .idea/
 *.swp
+venv/
