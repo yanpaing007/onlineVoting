@@ -14,7 +14,7 @@
                 {% if user.profile.profile_picture %}
                     <img src="{{ user.profile.profile_picture.url }}" alt="Profile Picture" class="card-img-top" style="border-radius: 5px 5px 0 0; height: 416px; object-fit: cover;">
                 {% else %}
-                    <img src="{% static 'default.png' %}" alt="Default Profile Picture" class="card-img-top" style="border-radius: 5px 5px 0 0; height: 250px; object-fit: cover;">
+                    <img src="{% static 'default_profile_pic.png' %}" alt="Default Profile Picture" class="card-img-top" style="border-radius: 5px 5px 0 0; height: 250px; object-fit: cover;">
                 {% endif %}
                 <div class="card-body text-center">
                     <h4 class="card-title">{{ user.username }}</h4>

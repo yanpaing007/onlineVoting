@@ -55,7 +55,7 @@
                                 {% if user.profile.profile_picture %}
                                 <img src="{{ user.profile.profile_picture.url }}" alt="Profile Picture" class="rounded-circle profile-picture" width="30" height="30">
                                 {% else %}
-                                <img src="{% static 'default_profile_pic.jpg' %}" alt="Default Profile Picture" class="rounded-circle profile-picture" width="30" height="30">
+                                <img src="{% static 'default_profile_pic.png' %}" alt="Default Profile Picture" class="rounded-circle profile-picture" width="30" height="30">
                                 {% endif %}
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
