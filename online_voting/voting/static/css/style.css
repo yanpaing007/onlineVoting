@@ -177,3 +177,14 @@ body {
     text-decoration: none;
     color: inherit; /* Ensure the link inherits the color of the parent element */
 }
+
+.alert.errorM {
+    position: absolute; /* or absolute, depending on the layout */
+    z-index: 1000; /* Ensure it's on top */
+    background-color: #f8d7da; /* Light red background for error message */
+    color: #721c24; /* Dark red text color for error message */
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #f5c6cb;
+    border-radius: 5px;
+}

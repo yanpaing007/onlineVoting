@@ -49,12 +49,18 @@
             </div>
         </div>
     </div>
-{% empty %}
+<!-- {% empty %}
         <div class="col-12">
             <div class="alert alert-info text-center">
                 No upcoming events available.
             </div>
-        </div>
+        </div> -->
 {% endfor %}
+{% else %}
+    <div class="col-12">
+        <div class="alert alert-info text-center">
+            There are no events in {{selected_category.name}}.
+        </div>
+    </div>
 {% endif %}
 {% endblock %}

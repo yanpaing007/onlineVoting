@@ -229,15 +229,18 @@ def vote(request, event_id):
         candidate_id = request.POST.get("candidate")
         anonymous_vote = request.POST.get("anonymousVote")
 
-        if candidate_id:
-            candidate = get_object_or_404(Candidate, pk=candidate_id)
+        if not candidate_id:
+            messages.error(request, "Please select a candidate before casting your vote!")
+            return redirect("voting:event_detail_by_id", event_id=event.id)
+        
+        candidate = get_object_or_404(Candidate, pk=candidate_id)
             # Save the vote with the voter information
-            vote = Vote(candidate=candidate, voting_event=event, voter=request.user)
-            if anonymous_vote =="on":
-                vote.is_anonymous=True
-            vote.save()
-            messages.success(request, "Your vote has been cast successfully!")
-            return redirect("voting:vote_result", event_id=event.id)
+        vote = Vote(candidate=candidate, voting_event=event, voter=request.user)
+        if anonymous_vote =="on":
+            vote.is_anonymous=True
+        vote.save()
+        messages.success(request, "Your vote has been cast successfully!")
+        return redirect("voting:vote_result", event_id=event.id)
 
     return redirect("voting:event_detail_by_id", event_id=event.id)
 
@@ -403,12 +406,11 @@ def event_by_category(request, cate):
     )
 
 def search_events(request):
-    all_events = VotingEvent.objects.filter(is_private=False)
     query = request.GET.get('query')
     print(query)
     results = []
     if query and len(query) >= 3:
-        results = all_events.objects.filter(event_name__icontains=query)
+        results = VotingEvent.objects.filter(event_name__icontains=query)
     else:
         messages.error(request, "Invalid input")
         
