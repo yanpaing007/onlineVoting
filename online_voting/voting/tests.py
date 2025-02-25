@@ -1,5 +1,7 @@
 from django.test import TestCase, TransactionTestCase
-from .factories import VotingEventFactory, CategoryFactory
+
+from .factories import CategoryFactory, VotingEventFactory
+
 
 class VotingEventTestCase(TransactionTestCase):
     def setUp(self):

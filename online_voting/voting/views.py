@@ -1,27 +1,24 @@
 import random
 import time
-from django.contrib.auth import login, authenticate
-from django.contrib.auth.decorators import login_required
+from zoneinfo import ZoneInfo
+
+import pytz
 from django.contrib import messages
+from django.contrib.auth import authenticate, login
+from django.contrib.auth.decorators import login_required
 from django.forms import ValidationError, modelformset_factory
 from django.http import JsonResponse
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.crypto import get_random_string
 from django.views import View
-from .models import VotingEvent, Candidate, Vote, Category, Profile , Favorite
-import pytz
-from zoneinfo import ZoneInfo
+
+from .forms import (CandidateForm, ProfileUpdateForm, RegisterForm,
+                    UserUpdateForm, VotingEventForm)
+from .models import Candidate, Category, Favorite, Profile, Vote, VotingEvent
 
 # voting/views.py
 
-from .forms import (
-    ProfileUpdateForm,
-    UserUpdateForm,
-    VotingEventForm,
-    CandidateForm,
-    RegisterForm,
-)
 
 # To resolve Timezone differences.
 class DatetimeFormatter:

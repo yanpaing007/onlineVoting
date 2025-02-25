@@ -1,7 +1,9 @@
 from django.contrib import admin
 from django.urls import reverse
 from django.utils.html import format_html
-from .models import Category, VotingEvent, Candidate, Vote, Profile, Favorite
+
+from .models import Candidate, Category, Favorite, Profile, Vote, VotingEvent
+
 
 class VoteInline(admin.TabularInline):
     model = Vote

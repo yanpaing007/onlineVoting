@@ -1,6 +1,8 @@
 import factory
 from django.contrib.auth.models import User
-from .models import VotingEvent, Category
+
+from .models import Category, VotingEvent
+
 
 class UserFactory(factory.django.DjangoModelFactory):
     class Meta:
