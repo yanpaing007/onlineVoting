@@ -4,11 +4,11 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
-from voting import views
-from voting.views import LoginView, RegistrationView
+from voting.views import event_list
+from voting.views.auth import LoginView, RegistrationView
 
 urlpatterns = [
-    path('', views.event_list, name='event_list'),
+    path('', event_list, name='event_list'),
     path('admin/', admin.site.urls),
     path('voting/', include('voting.urls')),  # Include voting URLs under 'voting/'
     path('accounts/login/', LoginView.as_view(), name='login'),
