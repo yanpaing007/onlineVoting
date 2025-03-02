@@ -1,62 +1,178 @@
 {% extends 'voting/base.html' %}
-{% load static%}
+{% load static %}
 {% load crispy_forms_tags %}
+
 {% block title %}Profile{% endblock %}
 
 {% block content %}
-
-<div class="container my-4">
-    <h2 class="mb-4">Update Your Profile</h2>
-    <div class="row">
-        <!-- Left Side: Display Current User Profile Information -->
-        <div class="col-md-4">
-            <div class="card">
-                {% if user.profile.profile_picture %}
-                    <img src="{{ user.profile.profile_picture.url }}" alt="Profile Picture" class="card-img-top" style="border-radius: 5px 5px 0 0; height: 416px; object-fit: cover;">
-                {% else %}
-                    <img src="{% static 'default_profile_pic.png' %}" alt="Default Profile Picture" class="card-img-top" style="border-radius: 5px 5px 0 0; height: 250px; object-fit: cover;">
-                {% endif %}
-                <div class="card-body text-center">
-                    <h4 class="card-title">{{ user.username }}</h4>
-                    <p class="card-text"><i class="fas fa-envelope"></i> {{ user.email }}</p>
-                    {% if user.profile.birthday %}
-                        <p class="card-text"><i class="fas fa-birthday-cake"></i> Birthday: {{ user.profile.birthday }}</p>
+<div class="max-w-7xl mx-auto">
+    <div class="md:grid md:grid-cols-3 md:gap-6">
+        <!-- Left Side: Profile Card -->
+        <div class="md:col-span-1">
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="relative pb-3/4">
+                    {% if user.profile.profile_picture %}
+                        <img src="{{ user.profile.profile_picture.url }}" 
+                             alt="Profile Picture"
+                             class="absolute h-full w-full object-cover">
                     {% else %}
-                        <p class="card-text"><i class="fas fa-birthday-cake"></i> Birthday: Not set yet.</p>
+                        <img src="{% static 'default_profile_pic.png' %}" 
+                             alt="Default Profile Picture"
+                             class="absolute h-full w-full object-cover">
                     {% endif %}
-                    <p class="card-text"><i class="fas fa-clock"></i> Timezone: {{ user.profile.timezone }}</p>
+                </div>
+                <div class="px-6 py-4">
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">{{ user.username }}</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-envelope w-5"></i>
+                            <span class="ml-2 text-sm">{{ user.email }}</span>
+                        </div>
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-birthday-cake w-5"></i>
+                            <span class="ml-2 text-sm">
+                                {% if user.profile.birthday %}
+                                    {{ user.profile.birthday }}
+                                {% else %}
+                                    Not set yet
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-globe w-5"></i>
+                            <span class="ml-2 text-sm">{{ user.profile.timezone }}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Right Side: Form to Edit Profile -->
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-body">
-                    <form method="post" enctype="multipart/form-data">
+        <!-- Right Side: Edit Form -->
+        <div class="mt-6 md:mt-0 md:col-span-2">
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="px-6 py-5 bg-gray-50 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Update Your Profile</h3>
+                    <p class="mt-1 text-sm text-gray-500">
+                        Manage your profile information and preferences.
+                    </p>
+                </div>
+                <div class="px-6 py-6">
+                    <form method="post" enctype="multipart/form-data" class="space-y-6">
                         {% csrf_token %}
-                        <div class="mb-3">
-                            {{ user_form.username|as_crispy_field }}
-                        </div>
                         
-                        <div class="mb-3">
-                            <label for="id_password" class="form-label">Password</label>
-                            <input type="password" name="password" class="form-control" id="id_password" placeholder="Enter new password if you want to change it">
+                        <div>
+                            <label for="{{ user_form.username.id_for_label }}" 
+                                   class="block text-sm font-medium text-gray-700">
+                                Username
+                            </label>
+                            <div class="mt-1">
+                                {{ user_form.username|as_crispy_field }}
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            {{ profile_form.profile_picture|as_crispy_field }}
+
+                        <div>
+                            <label for="id_password" class="block text-sm font-medium text-gray-700">
+                                Password
+                            </label>
+                            <div class="mt-1">
+                                <input type="password" 
+                                       name="password" 
+                                       id="id_password"
+                                       placeholder="Enter new password if you want to change it"
+                                       class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            {{ profile_form.birthday|as_crispy_field }}
+
+                        <div>
+                            <label for="{{ profile_form.profile_picture.id_for_label }}" 
+                                   class="block text-sm font-medium text-gray-700">
+                                Profile Picture
+                            </label>
+                            <div class="mt-1">
+                                <div class="flex items-center space-x-4">
+                                    {% if user.profile.profile_picture %}
+                                        <img src="{{ user.profile.profile_picture.url }}" 
+                                             alt="Current profile picture" 
+                                             class="h-12 w-12 rounded-full object-cover">
+                                    {% endif %}
+                                    {{ profile_form.profile_picture|as_crispy_field }}
+                                </div>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            {{ profile_form.timezone|as_crispy_field }}
+
+                        <div>
+                            <label for="{{ profile_form.birthday.id_for_label }}" 
+                                   class="block text-sm font-medium text-gray-700">
+                                Birthday
+                            </label>
+                            <div class="mt-1">
+                                {{ profile_form.birthday|as_crispy_field }}
+                            </div>
                         </div>
-                        <button type="submit" class="btn btn-primary">Update Profile</button>
+
+                        <div>
+                            <label for="{{ profile_form.timezone.id_for_label }}" 
+                                   class="block text-sm font-medium text-gray-700">
+                                Timezone
+                            </label>
+                            <div class="mt-1">
+                                {{ profile_form.timezone|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end">
+                            <button type="submit" 
+                                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                <i class="fas fa-save mr-2"></i>
+                                Update Profile
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Preview image before upload
+    const fileInput = document.querySelector('input[type="file"]');
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.querySelector('.rounded-full');
+                if (img) {
+                    img.src = e.target.result;
+                } else {
+                    const newImg = document.createElement('img');
+                    newImg.src = e.target.result;
+                    newImg.classList.add('h-12', 'w-12', 'rounded-full', 'object-cover');
+                    fileInput.parentElement.insertBefore(newImg, fileInput);
+                }
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+});
+</script>
+{% endblock %}
+
+{% block styles %}
+<style>
+.pb-3\/4 {
+    padding-bottom: 75%;
+}
+/* Custom file input styling */
+input[type="file"] {
+    @apply block w-full text-sm text-gray-500
+        file:mr-4 file:py-2 file:px-4
+        file:rounded-md file:border-0
+        file:text-sm file:font-semibold
+        file:bg-blue-50 file:text-blue-700
+        hover:file:bg-blue-100;
+}
+</style>
 {% endblock %}

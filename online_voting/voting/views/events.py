@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.forms import modelformset_factory, ValidationError
 from django.shortcuts import render, redirect, get_object_or_404
+from django.db.models import Count
 from ..models import VotingEvent, Candidate, Category, Favorite, Vote
 from ..forms import VotingEventForm, CandidateForm
 from .utils import DatetimeFormatter, get_event_status, generate_unique_token, events_in_user_time
@@ -128,10 +129,234 @@ def event_detail(request, event_id=None, event_token=None):
 
 
 def event_list(request):
+    # Get base queryset
+    events = VotingEvent.objects.all()
+    
+    # If user is not authenticated, only show non-private events
+    if not request.user.is_authenticated:
+        events = events.filter(is_private=False)
+    
+    # Get filter parameters
+    status_filter = request.GET.get('status')
+    sort_by = request.GET.get('sort', 'latest')
+    category_id = request.GET.get('category')
+    
+    # Apply category filter
+    if category_id:
+        events = events.filter(categories__id=category_id)
+        selected_category = get_object_or_404(Category, id=category_id)
+    else:
+        selected_category = None
+    
+    # Get categories for the filter dropdown
+    categories = Category.objects.all()
+    
+    # Convert events to user timezone and add status
+    user_timezone = request.user.profile.timezone if request.user.is_authenticated else 'UTC'
     now = timezone.now()
+    
+    # Apply status filter and annotate status
+    if status_filter:
+        if status_filter == 'ongoing':
+            events = events.filter(start_time__lte=now, end_time__gte=now)
+        elif status_filter == 'upcoming':
+            events = events.filter(start_time__gt=now)
+        elif status_filter == 'ended':
+            events = events.filter(end_time__lt=now)
+    
+    # Apply sorting
+    if sort_by == 'latest':
+        events = events.order_by('-created_at')
+    elif sort_by == 'oldest':
+        events = events.order_by('created_at')
+    elif sort_by == 'popular':
+        events = events.annotate(
+            favorite_count=Count('favorited_by'),
+            vote_count=Count('votes')
+        ).order_by('-favorite_count', '-vote_count', '-created_at')
+    elif sort_by == 'upcoming':
+        events = events.filter(start_time__gt=now).order_by('start_time')
+    
+    # Convert to user's timezone and add status
+    for event in events:
+        formatter = DatetimeFormatter(event, user_timezone)
+        event = formatter.set_user_time()
+        
+        if event.start_time <= now <= event.end_time:
+            event.status = 'ongoing'
+        elif now < event.start_time:
+            event.status = 'upcoming'
+        else:
+            event.status = 'ended'
+
+    return render(
+        request,
+        "voting/event_list.html",
+        {
+            "events": events,
+            "categories": categories,
+            "selected_category": selected_category,
+            "status_filter": status_filter,
+            "sort_by": sort_by,
+        },
+    )
+
+
+def event_by_category(request, cate):
+    category = get_object_or_404(Category, name=cate)
+    events = VotingEvent.objects.filter(categories=category)
+    
+    # Get filter parameters
+    status_filter = request.GET.get('status')
+    sort_by = request.GET.get('sort', 'latest')
+    
+    # Filter private events for non-authenticated users
+    if not request.user.is_authenticated:
+        events = events.filter(is_private=False)
+    
+    # Get categories for the filter dropdown
+    categories = Category.objects.all()
+    
+    # Convert events to user timezone and add status
+    user_timezone = request.user.profile.timezone if request.user.is_authenticated else 'UTC'
+    now = timezone.now()
+    
+    # Apply status filter
+    if status_filter:
+        if status_filter == 'ongoing':
+            events = events.filter(start_time__lte=now, end_time__gte=now)
+        elif status_filter == 'upcoming':
+            events = events.filter(start_time__gt=now)
+        elif status_filter == 'ended':
+            events = events.filter(end_time__lt=now)
+    
+    # Apply sorting
+    if sort_by == 'latest':
+        events = events.order_by('-created_at')
+    elif sort_by == 'oldest':
+        events = events.order_by('created_at')
+    elif sort_by == 'popular':
+        events = events.annotate(
+            favorite_count=Count('favorited_by'),
+            vote_count=Count('votes')
+        ).order_by('-favorite_count', '-vote_count', '-created_at')
+    elif sort_by == 'upcoming':
+        events = events.filter(start_time__gt=now).order_by('start_time')
+    
+    # Convert to user's timezone and add status
+    for event in events:
+        formatter = DatetimeFormatter(event, user_timezone)
+        event = formatter.set_user_time()
+        
+        if event.start_time <= now <= event.end_time:
+            event.status = 'ongoing'
+        elif now < event.start_time:
+            event.status = 'upcoming'
+        else:
+            event.status = 'ended'
+
+    return render(
+        request,
+        "voting/event_list.html",
+        {
+            "events": events,
+            "categories": categories,
+            "selected_category": category,
+            "status_filter": status_filter,
+            "sort_by": sort_by,
+        },
+    )
+
+
+def search_events(request):
+    query = request.GET.get('q')
+    events = VotingEvent.objects.all()
+    
+    # Get filter parameters
+    status_filter = request.GET.get('status')
+    sort_by = request.GET.get('sort', 'latest')
+    category_id = request.GET.get('category')
+    
+    # Filter private events for non-authenticated users
+    if not request.user.is_authenticated:
+        events = events.filter(is_private=False)
+    
+    # Apply search filter
+    if query:
+        events = events.filter(event_name__icontains=query)
+    
+    # Apply category filter
+    if category_id:
+        events = events.filter(categories__id=category_id)
+        selected_category = get_object_or_404(Category, id=category_id)
+    else:
+        selected_category = None
+    
+    # Get categories for the filter dropdown
+    categories = Category.objects.all()
+    
+    # Convert events to user timezone and add status
+    user_timezone = request.user.profile.timezone if request.user.is_authenticated else 'UTC'
+    now = timezone.now()
+    
+    # Apply status filter
+    if status_filter:
+        if status_filter == 'ongoing':
+            events = events.filter(start_time__lte=now, end_time__gte=now)
+        elif status_filter == 'upcoming':
+            events = events.filter(start_time__gt=now)
+        elif status_filter == 'ended':
+            events = events.filter(end_time__lt=now)
+    
+    # Apply sorting
+    if sort_by == 'latest':
+        events = events.order_by('-created_at')
+    elif sort_by == 'oldest':
+        events = events.order_by('created_at')
+    elif sort_by == 'popular':
+        events = events.annotate(
+            favorite_count=Count('favorited_by'),
+            vote_count=Count('votes')
+        ).order_by('-favorite_count', '-vote_count', '-created_at')
+    elif sort_by == 'upcoming':
+        events = events.filter(start_time__gt=now).order_by('start_time')
+    
+    # Convert to user's timezone and add status
+    for event in events:
+        formatter = DatetimeFormatter(event, user_timezone)
+        event = formatter.set_user_time()
+        
+        if event.start_time <= now <= event.end_time:
+            event.status = 'ongoing'
+        elif now < event.start_time:
+            event.status = 'upcoming'
+        else:
+            event.status = 'ended'
+    
+    return render(
+        request,
+        "voting/event_list.html",
+        {
+            "events": events,
+            "categories": categories,
+            "selected_category": selected_category,
+            "status_filter": status_filter,
+            "sort_by": sort_by,
+            "search_query": query,
+        },
+    )
+
+
+def delete_event(request, event_id):
+    event = get_object_or_404(VotingEvent, id=event_id)
+    event.delete()
+    return redirect('voting:my_events')
+
+
+def category_list(request):
     categories = Category.objects.all()
     category_colors = {
-        'Music': '#ff5733',  # Example color
+        'Music': '#ff5733',
         'Travel': '#33ff57',
         'Automobile': '#3357ff',
         'Mobile': 'blue',
@@ -139,51 +364,93 @@ def event_list(request):
         'Movies': 'maroon',
         'Entertainment': 'red',
         'Food and drinks': 'lightgreen'
-        # Add more categories and their respective colors here
     }
     for category in categories:
-        category.color = category_colors.get(category.name, '#6c757d')  # Default color if not found
-    all_events = VotingEvent.objects.filter(is_private=False)
-
-    ongoing = all_events.filter(start_time__lte=now, end_time__gte=now)
-    upcoming = all_events.filter(start_time__gt=now)
-    previous = all_events.filter(end_time__lt=now)
-
-    context = {
-        "ongoing_events": ongoing,
-        "upcoming_events": upcoming,
-        "previous_events": previous,
+        category.color = category_colors.get(category.name, '#6c757d')
+        
+    return render(request, "voting/category_list.html", {
         "categories": categories,
-    }
-
-    return render(request, "voting/home.html", context)
+    })
 
 
-def event_by_category(request, cate):
-    category = get_object_or_404(Category, name=cate)
+def category_detail(request, category_id):
+    category = get_object_or_404(Category, id=category_id)
     events = VotingEvent.objects.filter(categories=category)
+    
+    # Get filter parameters
+    status_filter = request.GET.get('status')
+    sort_by = request.GET.get('sort', 'latest')
+    
+    # Filter private events for non-authenticated users
+    if not request.user.is_authenticated:
+        events = events.filter(is_private=False)
+    
+    # Get categories for the filter dropdown
+    categories = Category.objects.all()
+    
+    # Convert events to user timezone and add status
+    user_timezone = request.user.profile.timezone if request.user.is_authenticated else 'UTC'
+    now = timezone.now()
+    
+    # Apply status filter
+    if status_filter:
+        if status_filter == 'ongoing':
+            events = events.filter(start_time__lte=now, end_time__gte=now)
+        elif status_filter == 'upcoming':
+            events = events.filter(start_time__gt=now)
+        elif status_filter == 'ended':
+            events = events.filter(end_time__lt=now)
+    
+    # Apply sorting
+    if sort_by == 'latest':
+        events = events.order_by('-created_at')
+    elif sort_by == 'oldest':
+        events = events.order_by('created_at')
+    elif sort_by == 'popular':
+        events = events.annotate(
+            favorite_count=Count('favorited_by'),
+            vote_count=Count('votes')
+        ).order_by('-favorite_count', '-vote_count', '-created_at')
+    elif sort_by == 'upcoming':
+        events = events.filter(start_time__gt=now).order_by('start_time')
+    
+    # Convert to user's timezone and add status
+    for event in events:
+        formatter = DatetimeFormatter(event, user_timezone)
+        event = formatter.set_user_time()
+        
+        if event.start_time <= now <= event.end_time:
+            event.status = 'ongoing'
+        elif now < event.start_time:
+            event.status = 'upcoming'
+        else:
+            event.status = 'ended'
 
     return render(
         request,
         "voting/event_list.html",
-        {"events": events, "selected_category": category},
+        {
+            "events": events,
+            "categories": categories,
+            "selected_category": category,
+            "status_filter": status_filter,
+            "sort_by": sort_by,
+        },
     )
 
 
-def search_events(request):
-    all_events = VotingEvent.objects.filter(is_private=False)
-    query = request.GET.get('query')
-    results = []
+@login_required
+def delete_category(request, category_id):
+    if not request.user.is_staff:
+        messages.error(request, "You don't have permission to delete categories.")
+        return redirect('voting:category_list')
     
-    if query and len(query) >= 3:
-        results = all_events.filter(event_name__icontains=query)
-    else:
-        messages.error(request, "Invalid input")
-        
-    return render(request, 'voting/search_results.html', {'results': results, 'query': query})
+    category = get_object_or_404(Category, id=category_id)
+    category.delete()
+    messages.success(request, f"Category '{category.name}' has been deleted.")
+    return redirect('voting:category_list')
 
 
-def delete_event(request, event_id):
-    event = get_object_or_404(VotingEvent, id=event_id)
-    event.delete()
-    return redirect('voting:my_events')
+def landing_page(request):
+    """Landing page view that showcases the main features of the voting system"""
+    return render(request, "voting/landing_page.html")

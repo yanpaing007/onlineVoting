@@ -1,144 +1,239 @@
 {% extends 'voting/base.html' %}
-
 {% load crispy_forms_tags %}
 
 {% block title %}Create Event{% endblock %}
 
 {% block content %}
-<h2>Create New Event</h2>
-<form method="post" enctype="multipart/form-data">
-    <div id="event_form">
-        {% csrf_token %}
-        {{ event_form|crispy }}
-    </div>
-    <h3>Candidates</h3>
-    {{ candidate_formset.management_form }}
-    <div id="candidate-container" class="row">
-        <div id="candidate-input-form" class="col-md-3 d-none">
-            <div class="card mb-3">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">New Candidate</h5>
-                </div>
-                <div class="card-body">
-                    {{ candidate_formset.empty_form.name|as_crispy_field }}
-                    {{ candidate_formset.empty_form.description|as_crispy_field }}
-                    <div class="form-group">
-                        {{ candidate_formset.empty_form.profile_pic|as_crispy_field }}
+<div class="max-w-7xl mx-auto">
+    <div class="bg-white rounded-xl shadow-md overflow-hidden mb-6">
+        <div class="p-6">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">Create New Event</h2>
+            
+            <form method="post" enctype="multipart/form-data" class="space-y-8">
+                {% csrf_token %}
+                
+                <!-- Event Details Section -->
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Event Details</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="event_form">
+                        {{ event_form|crispy }}
                     </div>
                 </div>
-            </div>
-        </div>
-        {% for form in candidate_formset.forms %}
-        <div class="col-md-3 candidate-form">
-            <div class="card mb-3">
-                <div class="card-header bg-secondary text-white">
-                    <h5 class="mb-0">Candidate {{ forloop.counter }}</h5>
-                </div>
-                <div class="card-body">
-                    {{ form.name|as_crispy_field }}
-                    {{ form.description|as_crispy_field }}
-                    <div class="form-group">
-                        {{ form.profile_pic|as_crispy_field }}
+
+                <!-- Candidates Section -->
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-medium text-gray-900">Candidates</h3>
+                        <button type="button" id="add" 
+                                class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                            <i class="fas fa-plus mr-2"></i>
+                            Add Candidate
+                        </button>
+                    </div>
+
+                    {{ candidate_formset.management_form }}
+                    
+                    <!-- Hidden template for new candidate form -->
+                    <div id="candidate-input-form" class="hidden">
+                        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+                            <div class="space-y-4">
+                                {{ candidate_formset.empty_form.name|as_crispy_field }}
+                                {{ candidate_formset.empty_form.description|as_crispy_field }}
+                                <div class="form-group">
+                                    {{ candidate_formset.empty_form.profile_pic|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Candidate Forms Container -->
+                    <div id="candidate-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {% for form in candidate_formset.forms %}
+                        <div class="candidate-form">
+                            <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h4 class="text-lg font-medium text-gray-900">Candidate {{ forloop.counter }}</h4>
+                                    {% if forloop.counter > 2 %}
+                                    <button type="button" class="remove-candidate text-red-600 hover:text-red-700">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                                <div class="space-y-4">
+                                    {{ form.name|as_crispy_field }}
+                                    {{ form.description|as_crispy_field }}
+                                    <div class="form-group">
+                                        {{ form.profile_pic|as_crispy_field }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Error Messages -->
+                    <div id="error-messages" class="mt-4 text-red-600 text-sm hidden">
+                        {% for error in candidate_formset.non_form_errors %}
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span>{{ error }}</span>
+                            </div>
+                        {% endfor %}
                     </div>
                 </div>
-            </div>
+
+                <!-- Submit Button -->
+                <div class="flex justify-end">
+                    <button type="submit" 
+                            class="inline-flex items-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                        <i class="fas fa-save mr-2"></i>
+                        Save Event
+                    </button>
+                </div>
+            </form>
         </div>
-        {% endfor %}
     </div>
-    <button type="button" id="add" class="btn btn-secondary">Add Candidate</button>
-    <button type="submit" class="btn btn-primary">Save Event</button>
-    <!-- Error Container -->
-    <div id="error-messages" class="text-danger text-small mt-3" style="display: none;">
-        {% for error in candidate_formset.non_form_errors %}
-            <div>{{ error }}</div>
-        {% endfor %}
-    </div>
-</form>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const errorMessages = document.getElementById('error-messages');
+document.addEventListener('DOMContentLoaded', function() {
+    const errorMessages = document.getElementById('error-messages');
+    const candidateContainer = document.getElementById('candidate-container');
+    const totalForms = document.getElementById('id_form-TOTAL_FORMS');
+    const addButton = document.getElementById('add');
+    const maxFormsInput = document.getElementById('id_candidate_numbers');
+    let maxForms = parseInt(maxFormsInput?.value || '2', 10);
 
-        // Check if there are errors and scroll to the bottom if errors are present
-        if (errorMessages && errorMessages.innerText.trim() !== '') {
-            window.scrollTo(0, document.body.scrollHeight);
-            errorMessages.style.display = 'block';
+    // Show errors if present
+    if (errorMessages && errorMessages.innerText.trim() !== '') {
+        errorMessages.classList.remove('hidden');
+        errorMessages.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // Handle max forms input change
+    maxFormsInput?.addEventListener('change', function() {
+        let value = parseInt(maxFormsInput.value, 10);
+        if (isNaN(value) || value < 2) {
+            alert('The number of candidates must be at least 2.');
+            maxFormsInput.value = '2';
+            return;
         }
-
-        const candidateContainer = document.getElementById('candidate-container');
-        const totalForms = document.getElementById('id_form-TOTAL_FORMS');
-        const addButton = document.getElementById('add');
-        const maxFormsInput = document.getElementById('id_candidate_numbers');
-        let maxForms = parseInt(maxFormsInput.value || '2', 10);
-
-        maxFormsInput.addEventListener('change', function() {
-            let value = parseInt(maxFormsInput.value, 10);
-            if (isNaN(value) || value < 2) {
-                alert('The number of candidates must be at least 2.');
-                maxFormsInput.value = '2';  // Set to default minimum
-                return;
-            }
-            maxForms = value;
-        });
-
-        addButton.addEventListener('click', function() {
-            const currentFormCount = parseInt(totalForms.value);
-
-            if (currentFormCount < maxForms) {
-                const newForm = document.createElement('div');
-                newForm.classList.add('col-md-3', 'candidate-form');  // Adding Bootstrap grid class
-                newForm.innerHTML = `
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            ${document.getElementById('candidate-input-form').innerHTML}
-                        </div>
-                    </div>
-                `;
-
-                const formRegex = /__prefix__/g;
-                newForm.innerHTML = newForm.innerHTML.replace(formRegex, currentFormCount);
-
-                candidateContainer.appendChild(newForm);
-                totalForms.value = currentFormCount + 1;
-            } else {
-                alert(`You can only add up to ${maxForms} candidates.`);
-            }
-        });
+        maxForms = value;
     });
 
-    document.addEventListener('DOMContentLoaded', function() {
-    const errorMessages = document.getElementById('error-messages');
+    // Add new candidate form
+    addButton.addEventListener('click', function() {
+        const currentFormCount = parseInt(totalForms.value);
+        if (currentFormCount < maxForms) {
+            const template = document.getElementById('candidate-input-form');
+            const newForm = document.createElement('div');
+            newForm.classList.add('candidate-form');
+            
+            // Clone the template and update form number
+            newForm.innerHTML = template.innerHTML.replace(/__prefix__/g, currentFormCount);
+            
+            // Add remove button
+            const header = document.createElement('div');
+            header.classList.add('flex', 'items-center', 'justify-between', 'mb-4');
+            header.innerHTML = `
+                <h4 class="text-lg font-medium text-gray-900">Candidate ${currentFormCount + 1}</h4>
+                <button type="button" class="remove-candidate text-red-600 hover:text-red-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            const container = newForm.querySelector('.bg-white');
+            container.insertBefore(header, container.firstChild);
+            
+            candidateContainer.appendChild(newForm);
+            totalForms.value = currentFormCount + 1;
 
-    // Check if there are errors and scroll to the bottom if errors are present
-    if (errorMessages && errorMessages.innerText.trim() !== '') {
-        window.scrollTo(0, document.body.scrollHeight);
-        errorMessages.style.display = 'block';
-    }
+            // Add smooth appearance animation
+            newForm.classList.add('opacity-0', 'transform', 'translate-y-4');
+            setTimeout(() => {
+                newForm.classList.add('transition-all', 'duration-300');
+                newForm.classList.remove('opacity-0', 'translate-y-4');
+            }, 10);
+        } else {
+            const notification = document.createElement('div');
+            notification.className = 'fixed bottom-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-lg transition-opacity duration-500';
+            notification.innerHTML = `You can only add up to ${maxForms} candidates.`;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => notification.remove(), 500);
+            }, 3000);
+        }
+    });
+
+    // Remove candidate form
+    candidateContainer.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-candidate')) {
+            const form = e.target.closest('.candidate-form');
+            const currentForms = document.querySelectorAll('.candidate-form').length;
+            
+            if (currentForms > 2) {
+                form.classList.add('transition-all', 'duration-300', 'opacity-0', 'transform', 'translate-y-4');
+                setTimeout(() => {
+                    form.remove();
+                    totalForms.value = currentForms - 1;
+                    
+                    // Update remaining candidate numbers
+                    document.querySelectorAll('.candidate-form').forEach((form, index) => {
+                        const title = form.querySelector('h4');
+                        if (title) {
+                            title.textContent = `Candidate ${index + 1}`;
+                        }
+                    });
+                }, 300);
+            }
+        }
+    });
+
+    // Preview image on file select
+    document.addEventListener('change', function(e) {
+        if (e.target.type === 'file' && e.target.accept.includes('image')) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.createElement('img');
+                    preview.src = e.target.result;
+                    preview.className = 'mt-2 rounded-lg max-h-48 object-cover';
+                    
+                    const container = e.target.closest('.form-group');
+                    const existingPreview = container.querySelector('img');
+                    if (existingPreview) {
+                        existingPreview.src = e.target.result;
+                    } else {
+                        container.appendChild(preview);
+                    }
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+    });
 });
 </script>
 {% endblock %}
 
 {% block styles %}
 <style>
-    #candidate-container {
-        display: flex;
-        flex-wrap: wrap;  /* Wraps the cards to maintain responsive design */
-        gap: 20px; /* Space between form and preview */
-    }
-    .card {
-        flex: 1; /* Take equal space */
-        border-radius: 20px;
-        border: none;
-    }
-    .img-fluid {
-        width: auto;
-        height: 300px;
-        object-fit: cover;
-        padding: 10px;
-        border: none;
-        border-radius: 20px;
-    }
+.candidate-form {
+    transition: all 0.3s ease-in-out;
+}
+
+/* Custom file input styling */
+input[type="file"] {
+    @apply block w-full text-sm text-gray-500
+        file:mr-4 file:py-2 file:px-4
+        file:rounded-lg file:border-0
+        file:text-sm file:font-semibold
+        file:bg-blue-50 file:text-blue-700
+        hover:file:bg-blue-100;
+}
 </style>
 {% endblock %}

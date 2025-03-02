@@ -43,17 +43,57 @@ class VoteForm(forms.ModelForm):
         }
 
 
-
 class RegisterForm(UserCreationForm):
-    email = forms.EmailField(required=True, widget=forms.EmailInput(attrs={'class': 'form-control'}))
-    name = forms.CharField(required=True, max_length=100, widget=forms.TextInput(attrs={'class': 'form-control'}))
-    username = forms.CharField(max_length=150, widget=forms.TextInput(attrs={'class': 'form-control'}))
-    password1 = forms.CharField(label='Password', widget=forms.PasswordInput(attrs={'class': 'form-control'}))
-    password2 = forms.CharField(label='Confirm Password', widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+    email = forms.EmailField(
+        required=True, 
+        widget=forms.EmailInput(attrs={
+            'class': 'block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400 transition-colors',
+            'placeholder': 'Email address'
+        })
+    )
+    name = forms.CharField(
+        required=True, 
+        max_length=100, 
+        widget=forms.TextInput(attrs={
+            'class': 'block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400 transition-colors',
+            'placeholder': 'Full name'
+        })
+    )
+    username = forms.CharField(
+        max_length=150, 
+        widget=forms.TextInput(attrs={
+            'class': 'block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400 transition-colors',
+            'placeholder': 'Choose a username'
+        })
+    )
+    password1 = forms.CharField(
+        label='Password', 
+        widget=forms.PasswordInput(attrs={
+            'class': 'block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400 transition-colors',
+            'placeholder': 'Create a password'
+        })
+    )
+    password2 = forms.CharField(
+        label='Confirm Password', 
+        widget=forms.PasswordInput(attrs={
+            'class': 'block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400 transition-colors',
+            'placeholder': 'Confirm password'
+        })
+    )
 
     class Meta:
         model = User
         fields = ['username', 'email', 'name', 'password1', 'password2']
+    
+    def save(self, commit=True):
+        user = super(RegisterForm, self).save(commit=False)
+        user.email = self.cleaned_data['email']
+        
+        if commit:
+            user.save()
+            
+        return user
+
 
 class CustomAuthenticationForm(AuthenticationForm):
     username = forms.CharField(
@@ -83,4 +123,4 @@ class ProfileUpdateForm(forms.ModelForm):
         widgets = {
             'birthday': forms.DateInput(attrs={'type': 'date'}),
         }
-        
+
