@@ -36,7 +36,7 @@ class VotingEventForm(forms.ModelForm):
         fields = ['event_name', 'start_time', 'end_time', 'categories', 'candidate_numbers', 'is_private']
         widgets = {
             'event_name': forms.TextInput(attrs={
-                'class': 'textinput',
+                'class': 'block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400 transition-colors',
                 'placeholder': 'Enter event name'
             }),
             'start_time': forms.DateTimeInput(attrs={
