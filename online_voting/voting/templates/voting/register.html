@@ -1,92 +1,165 @@
-{% extends "voting/base.html" %} {% block content %}
+{% extends 'voting/base.html' %}
+{% load crispy_forms_tags %}
 
-  <div class="row justify-content-center mt-5">
-    <div class="col-md-10 col-lg-8 col-xl-6">
-      <div class="card shadow-lg border-0 rounded-4">
-        <div class="card-body p-4">
-          <div class="text-center mb-4">
-            <h2 class="card-title mb-3">Register</h2>
-            <p class="card-text">
-              Create an account today to create events and vote for your favorite candidates.
-            </p>
-          </div>
+{% block title %}Register{% endblock %}
 
-          <form method="post" novalidate>
-            {% csrf_token %}
-            <div class="form-group mb-3">
-              <label for="id_username">Username</label>
-              {{ form.username }} {% if form.username.errors %}
-              <small class="text-danger">{{ form.username.errors.as_text }}</small>
-              {% endif %}
+{% block content %}
+<div class="min-h-[80vh] flex items-center justify-center">
+    <div class="w-full max-w-lg">
+        <!-- Registration Card -->
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden transform transition-all hover:scale-[1.01]">
+            <!-- Card Header -->
+            <div class="px-8 pt-8 pb-6">
+                <div class="text-center">
+                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 mb-6">
+                        <i class="fas fa-user-plus text-3xl text-blue-600"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-2">Create Your Account</h2>
+                    <p class="text-gray-600 mb-8">Join our community and start creating voting events</p>
+                </div>
+
+                <!-- Registration Form -->
+                <form method="post" class="space-y-6">
+                    {% csrf_token %}
+                    
+                    <!-- Username Field -->
+                    <div>
+                        <label for="{{ form.username.id_for_label }}" 
+                               class="block text-sm font-medium text-gray-700 mb-2">
+                            Username
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-user text-gray-400"></i>
+                            </div>
+                            {{ form.username }}
+                        </div>
+                        {% if form.username.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.username.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Name Field -->
+                    <div>
+                        <label for="{{ form.name.id_for_label }}" 
+                               class="block text-sm font-medium text-gray-700 mb-2">
+                            Full Name
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-id-card text-gray-400"></i>
+                            </div>
+                            {{ form.name }}
+                        </div>
+                        {% if form.name.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Email Field -->
+                    <div>
+                        <label for="{{ form.email.id_for_label }}" 
+                               class="block text-sm font-medium text-gray-700 mb-2">
+                            Email Address
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-envelope text-gray-400"></i>
+                            </div>
+                            {{ form.email }}
+                        </div>
+                        {% if form.email.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.email.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Password Fields -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="{{ form.password1.id_for_label }}" 
+                                   class="block text-sm font-medium text-gray-700 mb-2">
+                                Password
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-lock text-gray-400"></i>
+                                </div>
+                                {{ form.password1 }}
+                            </div>
+                            {% if form.password1.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.password1.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <label for="{{ form.password2.id_for_label }}" 
+                                   class="block text-sm font-medium text-gray-700 mb-2">
+                                Confirm Password
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-lock text-gray-400"></i>
+                                </div>
+                                {{ form.password2 }}
+                            </div>
+                            {% if form.password2.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.password2.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Password Requirements -->
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h4 class="text-sm font-medium text-gray-900 mb-3">Password Requirements</h4>
+                        <ul class="space-y-2 text-sm text-gray-600">
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 w-5"></i>
+                                <span class="ml-2">At least 8 characters long</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 w-5"></i>
+                                <span class="ml-2">Contains letters and numbers</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 w-5"></i>
+                                <span class="ml-2">Cannot be too similar to your username</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" 
+                            class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg
+                                   text-base font-medium text-white bg-blue-600 hover:bg-blue-700 
+                                   focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
+                                   transition-all duration-200 transform hover:scale-[1.02]">
+                        <i class="fas fa-user-plus mr-2"></i>
+                        Create Account
+                    </button>
+                </form>
             </div>
 
-            <div class="form-group mb-3">
-              <label for="id_email">Email</label>
-              {{ form.email }} {% if form.email.errors %}
-              <small class="text-danger">{{ form.email.errors.as_text }}</small>
-              {% endif %}
+            <!-- Card Footer -->
+            <div class="px-8 py-4 bg-gray-50 border-t border-gray-100">
+                <p class="text-center text-sm text-gray-600">
+                    Already have an account?
+                    <a href="{% url 'login' %}" 
+                       class="font-medium text-blue-600 hover:text-blue-700 transition-colors">
+                        Sign in instead
+                    </a>
+                </p>
             </div>
-
-            <div class="form-group mb-3">
-              <label for="id_name">Full Name</label>
-              {{ form.name }} {% if form.name.errors %}
-              <small class="text-danger">{{ form.name.errors.as_text }}</small>
-              {% endif %}
-            </div>
-
-            <div class="form-group mb-3 position-relative">
-              <label for="id_password1">Password</label>
-              <div class="position-relative">
-                  {{ form.password1 }}
-                  <i class="bi bi-eye position-absolute top-50 end-0 translate-middle-y pe-3" id="toggle-password1" style="cursor: pointer;"></i>
-              </div>
-              {% if form.password1.errors %}
-              <small class="text-danger">{{ form.password1.errors.as_text }}</small>
-              {% endif %}
-          </div>
-
-            <div class="form-group mb-3 position-relative">
-              <label for="id_password2">Confirm Password</label>
-              <div class="position-relative">
-                  {{ form.password2 }}
-                  <i class="bi bi-eye position-absolute top-50 end-0 translate-middle-y pe-3" id="toggle-password2" style="cursor: pointer;"></i>
-              </div>
-              {% if form.password2.errors %}
-              <small class="text-danger">{{ form.password2.errors.as_text }}</small>
-              {% endif %}
-          </div>
-
-            <button type="submit" class="btn btn-primary w-100 py-2">Register</button>
-          </form>
         </div>
-      </div>
+
+        <!-- Terms and Privacy -->
+        <div class="mt-6 text-center">
+            <p class="text-xs text-gray-600">
+                By creating an account, you agree to our
+                <a href="#" class="text-blue-600 hover:text-blue-700">Terms of Service</a>
+                and
+                <a href="#" class="text-blue-600 hover:text-blue-700">Privacy Policy</a>
+            </p>
+        </div>
     </div>
-  </div>
-
-
-<!-- Include Bootstrap Icons -->
-<link rel="stylesheet"
-  href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css" />
-
-<!-- JavaScript for Toggle Password Visibility -->
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const password1 = document.getElementById("id_password1");
-    const password2 = document.getElementById("id_password2");
-    const togglePassword1 = document.getElementById("toggle-password1");
-    const togglePassword2 = document.getElementById("toggle-password2");
-
-    togglePassword1.addEventListener("click", function () {
-      const type = password1.type === "password" ? "text" : "password";
-      password1.type = type;
-      this.classList.toggle("bi-eye-slash", type === "password");
-    });
-
-    togglePassword2.addEventListener("click", function () {
-      const type = password2.type === "password" ? "text" : "password";
-      password2.type = type;
-      this.classList.toggle("bi-eye-slash", type === "password");
-    });
-  });
-</script>
+</div>
 {% endblock %}

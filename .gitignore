@@ -17,3 +17,6 @@ online_voting/db.sqlite3
 .idea/
 *.swp
 venv/
+../node_modules/
+/node_modules/
+*.json

@@ -1,52 +1,526 @@
-{% extends 'voting/base.html' %}
+{% extends "voting/base.html" %}
+{% load static %}
 
-{% block title %}Events in {{ selected_category.name }}{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/styles.css' %}">
+<style>
+    /* Animation styles */
+    .event-card {
+        transition: all 0.3s ease;
+    }
+    .event-card:hover {
+        transform: scale(1.02);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    
+    .filter-button {
+        transition: all 0.2s ease;
+    }
+    .filter-button:active {
+        transform: scale(0.97);
+    }
+
+    .animate-spin {
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.3s ease-in;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10;
+    }
+    
+    .progress-bar {
+        height: 4px;
+        background-color: #e2e8f0;
+        border-radius: 9999px;
+        overflow: hidden;
+    }
+    
+    .progress-value {
+        height: 100%;
+        background-color: #3b82f6;
+        border-radius: 9999px;
+    }
+    
+    .view-toggle-active {
+        background-color: #3b82f6;
+        color: white;
+    }
+    
+    .category-tag {
+        transition: all 0.2s ease;
+    }
+    .category-tag:hover {
+        transform: translateY(-2px);
+    }
+    
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 8px;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .status-badge.ongoing {
+        background-color: #dcfce7;
+        color: #16a34a;
+    }
+    
+    .status-badge.upcoming {
+        background-color: #dbeafe;
+        color: #2563eb;
+    }
+    
+    .status-badge.ended {
+        background-color: #fee2e2;
+        color: #dc2626;
+    }
+    
+    .filter-section {
+        transition: max-height 0.3s ease;
+    }
+    
+    .filter-section.collapsed {
+        max-height: 0;
+        overflow: hidden;
+    }
+</style>
+{% endblock %}
+
+{% block title %}Events{% if selected_category %} - {{ selected_category.name }}{% endif %}{% endblock %}
 
 {% block content %}
-<h2>Events in {{ selected_category.name }}</h2>
-
-{% if events %}
-<div class="row">
-    {% for event in events %}
-    <div class="col-md-6 mb-4">
-        <div class="card shadow-sm">
-            <div class="card-header bg-dark text-white">
-                <h5 class="card-title mb-0">
-                    <a href="{% url 'voting:event_detail_by_id' event_id=event.id %}" class="text-decoration-none text-white">
-                        {{ event.event_name }}
-                    </a>
-                </h5>
+<div class="container mx-auto px-4 py-6">
+    <!-- Header Section - Improved with better spacing and responsive design -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 fade-in">
+        <div>
+            <h1 class="text-2xl lg:text-3xl font-bold mb-1 text-gray-900 dark:text-white">
+                Events Dashboard
+            </h1>
+            <p class="text-gray-600 dark:text-gray-300 text-sm lg:text-base">
+                {% if events %}
+                Showing <span class="font-medium">{{ events|length }}</span> events
+                {% if selected_category %}in {{ selected_category.name }}{% endif %}
+                {% endif %}
+            </p>
+        </div>
+        
+        <div class="flex items-center gap-3 md:gap-4 w-full md:w-auto justify-between md:justify-end">
+            <!-- Mobile filter toggle -->
+            
+            
+            <!-- View Mode Toggle -->
+            <div class="flex-end items-center gap-2 hidden md:flex">
+                <button
+                    onclick="setViewMode('grid')"
+                    id="grid-view-btn"
+                    class="filter-button p-2.5 rounded-lg transition-all bg-white dark:bg-gray-800 shadow-sm view-toggle view-toggle-active"
+                    aria-label="Grid view"
+                >
+                    <i class="fas fa-th"></i>
+                </button>
+                <button
+                    onclick="setViewMode('list')"
+                    id="list-view-btn"
+                    class="filter-button p-2.5 rounded-lg transition-all bg-white dark:bg-gray-800 shadow-sm view-toggle"
+                    aria-label="List view"
+                >
+                    <i class="fas fa-list"></i>
+                </button>
             </div>
-            <div class="card-body">
-                <p class="card-text text-muted">
-                    <i class="bi bi-person"></i> Created By: {{ event.created_by.username }}
-                </p>
-                <p class="card-text text-muted">
-                    <i class="bi bi-calendar"></i> Starts: {{ event.start_time|date:"Y-m-d H:i" }}
-                </p>
-                <div>
-                    {% for category in event.categories.all %}
-                    <span class="badge rounded-pill bg-secondary">{{ category.name }}</span>
+            
+            {% if request.user.is_authenticated %}
+            <a href="{% url 'voting:create_event' %}"
+               class="filter-button px-4 py-2.5 rounded-lg flex items-center gap-2 shadow-md bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-500 text-white transition-colors duration-200">
+                <i class="fas fa-calendar-plus text-lg"></i>
+                <span class="font-medium">New Event</span>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+  
+    <!-- Filters Section - Enhanced with animation and better mobile experience -->
+    <div id="filters-section" class="filter-section mb-6 md:mb-8 fade-in">
+        <div class="flex flex-col md:flex-row gap-3 md:gap-4 mb-6">
+            <!-- Search Bar -->
+            <div class="flex-1 relative">
+                <form method="GET" action="{% url 'voting:search_events' %}" class="w-full">
+                    <i class="fas fa-search absolute left-3 top-3.5 text-gray-400"></i>
+                    <input 
+                        type="search" 
+                        name="q" 
+                        placeholder="Search events..." 
+                        value="{{ search_query|default:'' }}"
+                        class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-400 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 outline-none transition-all"
+                    >
+                </form>
+            </div>
+            
+            <!-- Category Filter -->
+            <div class="relative">
+                <i class="fas fa-tag absolute left-3 top-3.5 text-gray-400"></i>
+                <select 
+                    name="category" 
+                    onchange="updateFilters(this)"
+                    class="pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-400 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:focus:border-blue-500 outline-none transition-all cursor-pointer"
+                >
+                    <option value="">All Categories</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}" 
+                            {% if selected_category.id == cat.id %}selected{% endif %}>
+                        {{ cat.name }}
+                    </option>
                     {% endfor %}
+                </select>
+            </div>
+      
+            <!-- Status Filter -->
+            <div class="relative">
+                <i class="fas fa-clock absolute left-3 top-3.5 text-gray-400"></i>
+                <select
+                    name="status" 
+                    onchange="updateFilters(this)"
+                    class="pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-400 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:focus:border-blue-500 outline-none transition-all cursor-pointer"
+                >
+                    <option value="">All Status</option>
+                    <option value="ongoing" {% if status_filter == 'ongoing' %}selected{% endif %}>Ongoing</option>
+                    <option value="upcoming" {% if status_filter == 'upcoming' %}selected{% endif %}>Upcoming</option>
+                    <option value="ended" {% if status_filter == 'ended' %}selected{% endif %}>Previous</option>
+                </select>
+            </div>
+            
+            <!-- Sort Filter -->
+            <div class="relative">
+                <i class="fas fa-sort absolute left-3 top-3.5 text-gray-400"></i>
+                <select
+                    name="sort" 
+                    onchange="updateFilters(this)"
+                    class="pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-400 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:focus:border-blue-500 outline-none transition-all cursor-pointer"
+                >
+                    <option value="latest" {% if sort_by == 'latest' %}selected{% endif %}>Latest</option>
+                    <option value="popular" {% if sort_by == 'popular' %}selected{% endif %}>Most Popular</option>
+                    <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>Oldest</option>
+                    <option value="upcoming" {% if sort_by == 'upcoming' %}selected{% endif %}>Upcoming First</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Section with Loading State -->
+    <div id="loading-indicator" class="hidden flex justify-center items-center py-20">
+        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+    </div>
+    
+    <div id="content-container" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 relative fade-in">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
+                {% if selected_category %}
+                Events in {{ selected_category.name }}
+                {% else %}
+                All Events
+                {% endif %}
+            </h2>
+        </div>
+
+        {% if events %}
+        <div id="events-container" class="events-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for event in events %}
+            <div class="event-card bg-white relative dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl overflow-hidden shadow-lg">
+                <!-- Color Accent based on Category -->
+                <div class="h-2 w-full 
+                    {% if event.categories.first.name == 'Technology' %}bg-purple-500
+                    {% elif event.categories.first.name == 'Entertainment' %}bg-blue-500
+                    {% elif event.categories.first.name == 'Sports' %}bg-green-500
+                    {% elif event.categories.first.name == 'Politics' %}bg-red-500
+                    {% else %}bg-gray-500{% endif %}">
+                </div>
+                
+                <div class="p-5 mt-3">
+                    <!-- Status Badge - Enhanced with better styling -->
+                    <div class="absolute top-4 right-4">
+                        <span class="status-badge {{ event.status }}">
+                            <i class="fas fa-circle text-xs"></i>
+                            <span>{{ event.status|title }}</span>
+                        </span>
+                    </div>
+                    
+                    <!-- Category and Favorite -->
+                    <div class="flex flex-wrap gap-2 mb-3 mt-2">
+                        {% for category in event.categories.all %}
+                        <a href="{% url 'voting:category_detail' category.id %}" 
+                           class="category-tag px-2.5 py-0.5 text-xs font-medium rounded-full flex items-center gap-1
+                           {% if category == selected_category %}
+                           bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200
+                           {% else %}
+                           bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200
+                           {% endif %}">
+                            {{ category.name }}
+                        </a>
+                        {% endfor %}
+                        
+                        {% if request.user.is_authenticated %}
+                        <div class="ml-auto">
+                            <form method="POST" action="{% url 'voting:event_detail_by_id' event.id %}" class="inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="favorite" value="true">
+                                <button type="submit" class="favorite-button p-1 hover:text-yellow-500 {% if event in user.favorites.all %}text-yellow-500{% else %}text-gray-400{% endif %}">
+                                    <i class="{% if event in user.favorites.all %}fas{% else %}far{% endif %} fa-star"></i>
+                                </button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Event Title -->
+                    <h3 class="text-lg font-semibold mb-3 group relative">
+                        <a href="{% url 'voting:event_detail_by_id' event.id %}" 
+                           class="text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400">
+                            {{ event.event_name }}
+                            <span class="absolute bottom-0 left-0 w-0 group-hover:w-full h-0.5 bg-blue-500 transition-all duration-300"></span>
+                        </a>
+                    </h3>
+                    
+                    <!-- Event Info with improved icons -->
+                    <div class="space-y-3">
+                        <div class="flex items-center gap-2.5">
+                            <i class="far fa-calendar-alt text-gray-500 dark:text-gray-400"></i>
+                            <div>
+                                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    {{ event.start_time|date:"M d, Y" }}
+                                </p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">
+                                    {{ event.start_time|time:"g:i A" }} - {{ event.end_time|time:"g:i A" }}
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2.5">
+                                <i class="far fa-user text-gray-500 dark:text-gray-400"></i>
+                                <span class="text-sm text-gray-700 dark:text-gray-300">
+                                    {{ event.created_by.username }}
+                                </span>
+                            </div>
+                            
+                            {% if event.is_private %}
+                            <div class="flex items-center gap-1">
+                                <i class="fas fa-lock text-gray-500 dark:text-gray-400"></i>
+                                <span class="text-xs font-medium text-gray-600 dark:text-gray-300">
+                                    Private
+                                </span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Only show progress bar for ongoing events -->
+                        {% if event.status == 'ongoing' %}
+                        <div class="mt-3">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                    Event Progress
+                                </span>
+                                <span class="text-xs font-medium text-blue-500">
+                                    {% widthratio event.elapsed_time event.total_duration 100 %}%
+                                </span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-value" style="width: {% widthratio event.elapsed_time event.total_duration 100 %}%"></div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
-            <div class="card-footer text-muted">
-                <a href="{% url 'voting:event_detail_by_id' event_id=event.id %}" class="btn btn-outline-primary btn-sm">View Details</a>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination if needed -->
+        {% if paginator.num_pages > 1 %}
+        <div class="flex justify-center mt-10">
+            <div class="flex items-center gap-1 rounded-lg overflow-hidden shadow-sm">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{{ query_params }}"
+                   class="px-3 py-2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                    &laquo;
+                </a>
+                {% else %}
+                <span class="px-3 py-2 bg-white dark:bg-gray-800 text-gray-300 dark:text-gray-600 opacity-50 cursor-not-allowed">
+                    &laquo;
+                </span>
+                {% endif %}
+                
+                {% for i in paginator.page_range %}
+                    {% if i == page_obj.number %}
+                    <span class="px-4 py-2 font-medium bg-blue-500 text-white">
+                        {{ i }}
+                    </span>
+                    {% else %}
+                    <a href="?page={{ i }}{{ query_params }}" 
+                       class="px-4 py-2 font-medium bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-all duration-200">
+                        {{ i }}
+                    </a>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{{ query_params }}"
+                   class="px-3 py-2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                    &raquo;
+                </a>
+                {% else %}
+                <span class="px-3 py-2 bg-white dark:bg-gray-800 text-gray-300 dark:text-gray-600 opacity-50 cursor-not-allowed">
+                    &raquo;
+                </span>
+                {% endif %}
             </div>
         </div>
-    </div>
-<!-- {% empty %}
-        <div class="col-12">
-            <div class="alert alert-info text-center">
-                No events available.
+        {% endif %}
+        
+        {% else %}
+        <div class="text-center py-16 fade-in">
+            <div class="text-6xl mb-4 text-gray-400 dark:text-gray-600">
+                <i class="fas fa-calendar-alt"></i>
             </div>
-        </div> -->
-{% endfor %}
-{% else %}
-    <div class="col-12">
-        <div class="alert alert-info text-center">
-            There are no events in {{selected_category.name}}.
+            <h3 class="text-xl font-medium mb-2 text-gray-900 dark:text-white">
+                No events found
+            </h3>
+            <p class="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+                We couldn't find any events matching your criteria. Try adjusting your filters or create a new event.
+            </p>
+            {% if request.user.is_authenticated %}
+            <a href="{% url 'voting:create_event' %}" 
+               class="mt-6 px-6 py-3 rounded-lg bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-500 text-white flex items-center gap-2 mx-auto inline-flex">
+                <i class="fas fa-calendar-plus"></i>
+                <span>Create New Event</span>
+            </a>
+            {% endif %}
         </div>
+        {% endif %}
     </div>
-{% endif %}
+</div>
+
+{% block extra_js %}
+<script>
+// View mode functionality
+function setViewMode(mode) {
+    const eventsContainer = document.getElementById('events-container');
+    const gridViewBtn = document.getElementById('grid-view-btn');
+    const listViewBtn = document.getElementById('list-view-btn');
+    
+    // Store user preference
+    localStorage.setItem('eventViewMode', mode);
+    
+    if (mode === 'list') {
+        eventsContainer.classList.remove('grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-3');
+        eventsContainer.classList.add('grid-cols-1');
+        
+        // Update buttons
+        listViewBtn.classList.add('view-toggle-active');
+        gridViewBtn.classList.remove('view-toggle-active');
+        
+        // Add list view specific styling to cards
+        const eventCards = document.querySelectorAll('.event-card');
+        eventCards.forEach(card => {
+            card.classList.add('list-view');
+        });
+    } else {
+        eventsContainer.classList.remove('grid-cols-1');
+        eventsContainer.classList.add('grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-3');
+        
+        // Update buttons
+        gridViewBtn.classList.add('view-toggle-active');
+        listViewBtn.classList.remove('view-toggle-active');
+        
+        // Remove list view specific styling
+        const eventCards = document.querySelectorAll('.event-card');
+        eventCards.forEach(card => {
+            card.classList.remove('list-view');
+        });
+    }
+}
+
+// Toggle filters on mobile
+document.getElementById('toggle-filters-btn')?.addEventListener('click', function() {
+    const filtersSection = document.getElementById('filters-section');
+    const filterIcon = document.querySelector('.filter-icon');
+    
+    filtersSection.classList.toggle('collapsed');
+    filterIcon.classList.toggle('text-blue-500');
+});
+
+// Load user's preferred view mode
+document.addEventListener('DOMContentLoaded', function() {
+    const savedViewMode = localStorage.getItem('eventViewMode') || 'grid';
+    setViewMode(savedViewMode);
+    
+    // On mobile, collapse filters by default
+    if (window.innerWidth < 768) {
+        document.getElementById('filters-section').classList.add('collapsed');
+    }
+});
+
+function updateFilters(changedSelect) {
+    // Show loading indicator
+    document.getElementById('loading-indicator').classList.remove('hidden');
+    document.getElementById('content-container').classList.add('opacity-50');
+    
+    // Get current URL and parameters
+    const url = new URL(window.location.href);
+    const params = new URLSearchParams(url.search);
+    
+    // Update changed parameter
+    if (changedSelect.value) {
+        params.set(changedSelect.name, changedSelect.value);
+    } else {
+        params.delete(changedSelect.name);
+    }
+    
+    // Keep other filter values
+    const filterNames = ['category', 'status', 'sort', 'q'];
+    filterNames.forEach(name => {
+        if (name !== changedSelect.name) {
+            const select = document.querySelector(`[name="${name}"]`);
+            if (select && select.value) {
+                params.set(name, select.value);
+            }
+        }
+    });
+    
+    // Update URL and reload page
+    url.search = params.toString();
+    window.location.href = url.toString();
+}
+
+// Show loading state when navigating away
+window.addEventListener('beforeunload', () => {
+    document.getElementById('loading-indicator').classList.remove('hidden');
+    document.getElementById('content-container').classList.add('opacity-50');
+});
+</script>
+{% endblock %}
 {% endblock %}

@@ -1,144 +1,685 @@
 {% extends 'voting/base.html' %}
-
 {% load crispy_forms_tags %}
 
 {% block title %}Create Event{% endblock %}
 
 {% block content %}
-<h2>Create New Event</h2>
-<form method="post" enctype="multipart/form-data">
-    <div id="event_form">
-        {% csrf_token %}
-        {{ event_form|crispy }}
-    </div>
-    <h3>Candidates</h3>
-    {{ candidate_formset.management_form }}
-    <div id="candidate-container" class="row">
-        <div id="candidate-input-form" class="col-md-3 d-none">
-            <div class="card mb-3">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">New Candidate</h5>
+<div class="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-5xl mx-auto">
+        <!-- Header Section -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-extrabold text-gray-900 sm:text-4xl">
+                Create New Event
+            </h1>
+            <p class="mt-3 text-xl text-gray-500">
+                Set up your voting event in just a few steps
+            </p>
+        </div>
+
+        <!-- Progress Steps -->
+        <div class="mb-8">
+            <div class="relative">
+                <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-gray-200">
+                    <div id="progress-bar" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500 w-1/3 transition-all duration-500"></div>
                 </div>
-                <div class="card-body">
-                    {{ candidate_formset.empty_form.name|as_crispy_field }}
-                    {{ candidate_formset.empty_form.description|as_crispy_field }}
-                    <div class="form-group">
-                        {{ candidate_formset.empty_form.profile_pic|as_crispy_field }}
-                    </div>
+                <div class="flex justify-between text-xs text-gray-600">
+                    <div class="w-1/3 text-center">Event Details</div>
+                    <div class="w-1/3 text-center">Candidates</div>
+                    <div class="w-1/3 text-center">Review</div>
                 </div>
             </div>
         </div>
-        {% for form in candidate_formset.forms %}
-        <div class="col-md-3 candidate-form">
-            <div class="card mb-3">
-                <div class="card-header bg-secondary text-white">
-                    <h5 class="mb-0">Candidate {{ forloop.counter }}</h5>
-                </div>
-                <div class="card-body">
-                    {{ form.name|as_crispy_field }}
-                    {{ form.description|as_crispy_field }}
-                    <div class="form-group">
-                        {{ form.profile_pic|as_crispy_field }}
+
+        <div class="bg-white shadow-xl rounded-2xl overflow-hidden">
+            <form method="post" enctype="multipart/form-data" class="space-y-8" id="create-event-form">
+                {% csrf_token %}
+                
+                <!-- Event Details Section -->
+                <div class="p-8" id="event-details-section">
+                    <div class="flex items-center space-x-3 mb-6">
+                        <div class="flex-shrink-0">
+                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-calendar-alt text-blue-600"></i>
+                            </div>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900">Event Details</h3>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-xl p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="event_form">
+                            {{ event_form|crispy }}
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex justify-end">
+                        <button type="button" id="next-to-candidates" 
+                                class="inline-flex items-center px-6 py-3 border border-transparent rounded-xl shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">
+                            Next: Add Candidates
+                            <i class="fas fa-arrow-right ml-2"></i>
+                        </button>
                     </div>
                 </div>
-            </div>
+
+                <!-- Candidates Section -->
+                <div class="border-t border-gray-200 p-8 hidden" id="candidates-section">
+                    {{ candidate_formset.management_form }}
+                    
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center space-x-3">
+                            <div class="flex-shrink-0">
+                                <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-users text-purple-600"></i>
+                                </div>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900">Candidates</h3>
+                        </div>
+                        <button type="button" id="add" 
+                                class="group inline-flex items-center px-4 py-2 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-105">
+                            <i class="fas fa-plus mr-2 group-hover:rotate-90 transition-transform duration-200"></i>
+                            Add Candidate
+                        </button>
+                    </div>
+                    
+                    <!-- Hidden template for new candidate form -->
+                    <div id="candidate-input-form" class="hidden">
+                        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200 hover:border-blue-300 transition-colors duration-200">
+                            <div class="space-y-4">
+                                {{ candidate_formset.empty_form|crispy }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Candidate Forms Container -->
+                    <div id="candidate-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {% for form in candidate_formset.forms %}
+                        <div class="candidate-form">
+                            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200 hover:border-blue-300 transition-all duration-200 group">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h4 class="text-lg font-semibold text-gray-900 flex items-center">
+                                        <span class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3 text-sm">
+                                            {{ forloop.counter }}
+                                        </span>
+                                        Candidate {{ forloop.counter }}
+                                    </h4>
+                                    {% if forloop.counter > 2 %}
+                                    <button type="button" class="remove-candidate text-gray-400 hover:text-red-600 transition-colors duration-200 opacity-0 group-hover:opacity-100">
+                                        <i class="fas fa-times-circle text-xl"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                                <div class="space-y-4">
+                                    {{ form|crispy }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Navigation Buttons -->
+                    <div class="mt-8 flex justify-between">
+                        <button type="button" id="back-to-details" 
+                                class="inline-flex items-center px-6 py-3 border border-gray-300 rounded-xl shadow-sm text-base font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">
+                            <i class="fas fa-arrow-left mr-2"></i>
+                            Back to Details
+                        </button>
+                        <button type="button" id="next-to-review" 
+                                class="inline-flex items-center px-6 py-3 border border-transparent rounded-xl shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">
+                            Next: Review
+                            <i class="fas fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Review Section -->
+                <div class="border-t border-gray-200 p-8 hidden" id="review-section">
+                    <div class="flex items-center space-x-3 mb-6">
+                        <div class="flex-shrink-0">
+                            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-check text-green-600"></i>
+                            </div>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900">Review Your Event</h3>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="bg-gray-50 rounded-xl p-6">
+                            <h4 class="text-lg font-semibold text-gray-900 mb-4">Event Details</h4>
+                            <dl class="grid grid-cols-1 md:grid-cols-2 gap-4" id="review-details">
+                                <!-- Will be filled by JavaScript -->
+                            </dl>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-xl p-6">
+                            <h4 class="text-lg font-semibold text-gray-900 mb-4">Candidates</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="review-candidates">
+                                <!-- Will be filled by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Navigation Buttons -->
+                    <div class="mt-8 flex justify-between">
+                        <button type="button" id="back-to-candidates" 
+                                class="inline-flex items-center px-6 py-3 border border-gray-300 rounded-xl shadow-sm text-base font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">
+                            <i class="fas fa-arrow-left mr-2"></i>
+                            Back to Candidates
+                        </button>
+                        <button type="submit" 
+                                class="group inline-flex items-center px-6 py-3 border border-transparent rounded-xl shadow-sm text-base font-medium text-white bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 transform hover:scale-105">
+                            <i class="fas fa-save mr-2 group-hover:rotate-12 transition-transform duration-200"></i>
+                            Create Event
+                        </button>
+                    </div>
+                </div>
+            </form>
         </div>
-        {% endfor %}
     </div>
-    <button type="button" id="add" class="btn btn-secondary">Add Candidate</button>
-    <button type="submit" class="btn btn-primary">Save Event</button>
-    <!-- Error Container -->
-    <div id="error-messages" class="text-danger text-small mt-3" style="display: none;">
-        {% for error in candidate_formset.non_form_errors %}
-            <div>{{ error }}</div>
-        {% endfor %}
-    </div>
-</form>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const errorMessages = document.getElementById('error-messages');
+document.addEventListener('DOMContentLoaded', function() {
+    // Form sections and progress
+    const sections = {
+        details: document.getElementById('event-details-section'),
+        candidates: document.getElementById('candidates-section'),
+        review: document.getElementById('review-section')
+    };
+    const progressBar = document.getElementById('progress-bar');
+    let currentSection = 'details';
+    
+    // Add candidate functionality
+    const addButton = document.getElementById('add');
+    const candidateContainer = document.getElementById('candidate-container');
+    const totalForms = document.getElementById('id_form-TOTAL_FORMS');
+    
+    addButton.addEventListener('click', function() {
+        const currentFormCount = parseInt(totalForms.value);
+        const template = document.getElementById('candidate-input-form');
+        const newForm = document.createElement('div');
+        newForm.classList.add('candidate-form');
+        
+        // Clone the template and update form number
+        const formHtml = template.innerHTML.replace(/__prefix__/g, currentFormCount);
+        newForm.innerHTML = `
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200 hover:border-blue-300 transition-all duration-200 group">
+                <div class="flex items-center justify-between mb-4">
+                    <h4 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <span class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3 text-sm">
+                            ${currentFormCount + 1}
+                        </span>
+                        Candidate ${currentFormCount + 1}
+                    </h4>
+                    <button type="button" class="remove-candidate text-gray-400 hover:text-red-600 transition-colors duration-200 opacity-0 group-hover:opacity-100">
+                        <i class="fas fa-times-circle text-xl"></i>
+                    </button>
+                </div>
+                ${formHtml}
+            </div>
+        `;
+        
+        candidateContainer.appendChild(newForm);
+        totalForms.value = currentFormCount + 1;
 
-        // Check if there are errors and scroll to the bottom if errors are present
-        if (errorMessages && errorMessages.innerText.trim() !== '') {
-            window.scrollTo(0, document.body.scrollHeight);
-            errorMessages.style.display = 'block';
-        }
+        // Add smooth appearance animation
+        newForm.classList.add('opacity-0', 'transform', 'translate-y-4');
+        setTimeout(() => {
+            newForm.classList.add('transition-all', 'duration-300');
+            newForm.classList.remove('opacity-0', 'translate-y-4');
+        }, 10);
 
-        const candidateContainer = document.getElementById('candidate-container');
-        const totalForms = document.getElementById('id_form-TOTAL_FORMS');
-        const addButton = document.getElementById('add');
-        const maxFormsInput = document.getElementById('id_candidate_numbers');
-        let maxForms = parseInt(maxFormsInput.value || '2', 10);
-
-        maxFormsInput.addEventListener('change', function() {
-            let value = parseInt(maxFormsInput.value, 10);
-            if (isNaN(value) || value < 2) {
-                alert('The number of candidates must be at least 2.');
-                maxFormsInput.value = '2';  // Set to default minimum
-                return;
-            }
-            maxForms = value;
-        });
-
-        addButton.addEventListener('click', function() {
-            const currentFormCount = parseInt(totalForms.value);
-
-            if (currentFormCount < maxForms) {
-                const newForm = document.createElement('div');
-                newForm.classList.add('col-md-3', 'candidate-form');  // Adding Bootstrap grid class
-                newForm.innerHTML = `
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            ${document.getElementById('candidate-input-form').innerHTML}
-                        </div>
-                    </div>
-                `;
-
-                const formRegex = /__prefix__/g;
-                newForm.innerHTML = newForm.innerHTML.replace(formRegex, currentFormCount);
-
-                candidateContainer.appendChild(newForm);
-                totalForms.value = currentFormCount + 1;
-            } else {
-                alert(`You can only add up to ${maxForms} candidates.`);
-            }
-        });
+        // Setup image preview for the new form
+        setupImagePreview(newForm);
     });
 
-    document.addEventListener('DOMContentLoaded', function() {
-    const errorMessages = document.getElementById('error-messages');
+    // Remove candidate functionality
+    candidateContainer.addEventListener('click', function(e) {
+        const removeButton = e.target.closest('.remove-candidate');
+        if (removeButton) {
+            const form = removeButton.closest('.candidate-form');
+            const currentForms = document.querySelectorAll('.candidate-form').length;
+            
+            if (currentForms > 2) {
+                form.classList.add('opacity-0', 'transform', 'translate-y-4');
+                setTimeout(() => {
+                    form.remove();
+                    updateCandidateNumbers();
+                }, 300);
+            } else {
+                showNotification('You must have at least 2 candidates', 'error');
+            }
+        }
+    });
 
-    // Check if there are errors and scroll to the bottom if errors are present
-    if (errorMessages && errorMessages.innerText.trim() !== '') {
-        window.scrollTo(0, document.body.scrollHeight);
-        errorMessages.style.display = 'block';
+    // Update candidate numbers after removal
+    function updateCandidateNumbers() {
+        const forms = document.querySelectorAll('.candidate-form');
+        forms.forEach((form, index) => {
+            const numberSpan = form.querySelector('.w-8.h-8');
+            const title = form.querySelector('h4');
+            if (numberSpan && title) {
+                numberSpan.textContent = index + 1;
+                title.childNodes[1].textContent = `Candidate ${index + 1}`;
+            }
+        });
+        totalForms.value = forms.length;
     }
+
+    // Image preview functionality
+    function setupImagePreview(formElement) {
+        const fileInput = formElement.querySelector('input[type="file"]');
+        const previewContainer = formElement.querySelector('.image-preview');
+        
+        if (fileInput && !previewContainer) {
+            const container = document.createElement('div');
+            container.className = 'image-preview mt-3 flex items-center justify-center';
+            fileInput.parentElement.appendChild(container);
+        }
+
+        fileInput?.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const container = fileInput.parentElement.querySelector('.image-preview');
+                    container.innerHTML = `
+                        <div class="relative group">
+                            <img src="${e.target.result}" class="rounded-lg max-h-48 object-cover shadow-md transition-transform duration-200 group-hover:scale-105" />
+                            <div class="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-lg flex items-center justify-center">
+                                <span class="text-white text-sm">Click to change</span>
+                            </div>
+                        </div>
+                    `;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    // Setup image preview for initial forms
+    document.querySelectorAll('.candidate-form').forEach(setupImagePreview);
+
+    // Rest of the existing code...
+    // Navigation functions
+    function showSection(sectionName) {
+        Object.entries(sections).forEach(([name, element]) => {
+            element.classList.toggle('hidden', name !== sectionName);
+        });
+        currentSection = sectionName;
+        
+        // Update progress bar
+        const progress = {
+            'details': '33%',
+            'candidates': '66%',
+            'review': '100%'
+        };
+        progressBar.style.width = progress[sectionName];
+    }
+
+    // Navigation event listeners
+    document.getElementById('next-to-candidates').addEventListener('click', () => {
+        if (validateEventDetails()) {
+            showSection('candidates');
+            updateReviewSection();
+        }
+    });
+
+    document.getElementById('back-to-details').addEventListener('click', () => {
+        showSection('details');
+    });
+
+    document.getElementById('next-to-review').addEventListener('click', () => {
+        if (validateCandidates()) {
+            showSection('review');
+            updateReviewSection();
+        }
+    });
+
+    document.getElementById('back-to-candidates').addEventListener('click', () => {
+        showSection('candidates');
+    });
+
+    // Validation functions
+    function validateEventDetails() {
+        const requiredFields = ['event_name', 'start_time', 'end_time'];
+        let isValid = true;
+
+        requiredFields.forEach(field => {
+            const input = document.getElementById('id_' + field);
+            const value = input.value.trim();
+            
+            if (!value) {
+                isValid = false;
+                showError(input, 'This field is required');
+            } else {
+                clearError(input);
+            }
+        });
+
+        return isValid;
+    }
+
+    function validateCandidates() {
+        const candidateForms = document.querySelectorAll('.candidate-form');
+        let isValid = true;
+
+        if (candidateForms.length < 2) {
+            showNotification('You must add at least 2 candidates', 'error');
+            isValid = false;
+        }
+
+        candidateForms.forEach(form => {
+            const nameInput = form.querySelector('input[name$="-name"]');
+            if (!nameInput.value.trim()) {
+                isValid = false;
+                showError(nameInput, 'Candidate name is required');
+            } else {
+                clearError(nameInput);
+            }
+        });
+
+        return isValid;
+    }
+
+    // Error handling functions
+    function showError(input, message) {
+        const errorDiv = input.parentElement.querySelector('.invalid-feedback') 
+            || document.createElement('div');
+        errorDiv.className = 'invalid-feedback text-red-600 text-sm mt-1';
+        errorDiv.textContent = message;
+        
+        if (!input.parentElement.querySelector('.invalid-feedback')) {
+            input.parentElement.appendChild(errorDiv);
+        }
+        
+        input.classList.add('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
+    }
+
+    function clearError(input) {
+        const errorDiv = input.parentElement.querySelector('.invalid-feedback');
+        if (errorDiv) {
+            errorDiv.remove();
+        }
+        input.classList.remove('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
+    }
+
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `fixed bottom-4 right-4 p-4 rounded-lg shadow-lg transition-all duration-500 transform translate-y-0 ${
+            type === 'error' ? 'bg-red-100 border-l-4 border-red-500 text-red-700' : 'bg-blue-100 border-l-4 border-blue-500 text-blue-700'
+        }`;
+        notification.textContent = message;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            notification.style.transform = 'translateY(100%)';
+            setTimeout(() => notification.remove(), 500);
+        }, 3000);
+    }
+
+    // Review section update
+    function updateReviewSection() {
+        const reviewDetails = document.getElementById('review-details');
+        const reviewCandidates = document.getElementById('review-candidates');
+        
+        // Update event details
+        const eventDetails = {
+            'Event Name': document.getElementById('id_event_name').value,
+            'Start Time': formatDateTime(document.getElementById('id_start_time').value),
+            'End Time': formatDateTime(document.getElementById('id_end_time').value),
+            'Private Event': document.getElementById('id_is_private').checked ? 'Yes' : 'No',
+            'Maximum Candidates': document.getElementById('id_candidate_numbers').value
+        };
+
+        reviewDetails.innerHTML = Object.entries(eventDetails)
+            .map(([label, value]) => `
+                <div class="px-4 py-3 bg-white rounded-lg shadow-sm">
+                    <dt class="text-sm font-medium text-gray-500">${label}</dt>
+                    <dd class="mt-1 text-sm text-gray-900">${value}</dd>
+                </div>
+            `).join('');
+
+        // Update candidates preview
+        reviewCandidates.innerHTML = '';
+        document.querySelectorAll('.candidate-form').forEach((form, index) => {
+            const name = form.querySelector('input[name$="-name"]').value;
+            const description = form.querySelector('textarea[name$="-description"]').value;
+            const fileInput = form.querySelector('input[type="file"]');
+            const imagePreview = form.querySelector('.image-preview img');
+
+            const candidateCard = document.createElement('div');
+            candidateCard.className = 'bg-white rounded-lg shadow-sm p-4';
+            candidateCard.innerHTML = `
+                <div class="flex items-start space-x-4">
+                    <div class="flex-shrink-0 w-16 h-16 bg-gray-100 rounded-full overflow-hidden">
+                        ${imagePreview ? 
+                            `<img src="${imagePreview.src}" alt="${name}" class="w-full h-full object-cover">` :
+                            `<div class="w-full h-full flex items-center justify-center text-gray-400">
+                                <i class="fas fa-user text-2xl"></i>
+                            </div>`
+                        }
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="text-lg font-semibold text-gray-900">
+                            ${name || 'Unnamed Candidate'}
+                        </h4>
+                        <p class="mt-1 text-sm text-gray-500 line-clamp-2">
+                            ${description || 'No description provided'}
+                        </p>
+                    </div>
+                </div>
+            `;
+            reviewCandidates.appendChild(candidateCard);
+        });
+    }
+
+    function formatDateTime(dateTimeStr) {
+        if (!dateTimeStr) return 'Not set';
+        const date = new Date(dateTimeStr);
+        return date.toLocaleString();
+    }
+
+    // Initialize form
+    showSection('details');
 });
 </script>
 {% endblock %}
 
 {% block styles %}
 <style>
-    #candidate-container {
-        display: flex;
-        flex-wrap: wrap;  /* Wraps the cards to maintain responsive design */
-        gap: 20px; /* Space between form and preview */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+    /* Smooth transitions */
+    .section-transition {
+        transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
     }
-    .card {
-        flex: 1; /* Take equal space */
-        border-radius: 20px;
-        border: none;
+
+    .section-transition.hidden {
+        opacity: 0;
+        transform: translateX(20px);
     }
-    .img-fluid {
-        width: auto;
-        height: 300px;
-        object-fit: cover;
-        padding: 10px;
-        border: none;
-        border-radius: 20px;
+
+    /* Custom file input styling */
+    .fileinput {
+        @apply block w-full text-sm text-gray-500 
+               file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 
+               file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-600 
+               hover:file:bg-blue-100 file:transition-colors file:duration-200 
+               file:cursor-pointer focus:outline-none;
     }
+
+    .fileinput::-webkit-file-upload-button {
+        @apply mr-4 py-2.5 px-4 rounded-xl border-0 text-sm font-semibold 
+               bg-blue-50 text-blue-600 hover:bg-blue-100 
+               transition-colors duration-200 cursor-pointer;
+    }
+
+    .fileinput::file-selector-button {
+        @apply mr-4 py-2.5 px-4 rounded-xl border-0 text-sm font-semibold 
+               bg-blue-50 text-blue-600 hover:bg-blue-100 
+               transition-colors duration-200 cursor-pointer;
+    }
+
+    /* Form group spacing and organization */
+    .form-group {
+        @apply space-y-2;
+    }
+
+    .form-group > label {
+        @apply block text-sm font-medium text-gray-700;
+    }
+
+    .form-group > .help-text {
+        @apply mt-1 text-sm text-gray-500;
+    }
+
+    /* Input field containers */
+    .input-container {
+        @apply relative rounded-xl focus-within:ring-2 focus-within:ring-blue-500 
+               focus-within:border-blue-500 bg-white;
+    }
+
+    /* Additional responsive padding for form sections */
+    .form-section {
+        @apply space-y-6 p-6 sm:p-8;
+    }
+
+    /* Error state styling */
+    .has-error input,
+    .has-error select,
+    .has-error textarea {
+        @apply border-red-300 focus:border-red-500 focus:ring-red-500;
+    }
+
+    .error-message {
+        @apply mt-1 text-sm text-red-600;
+    }
+
+    /* Custom file input styling */
+    input[type="file"] {
+        @apply block w-full text-sm text-gray-500;
+    }
+
+    input[type="file"]::file-selector-button {
+        @apply mr-4 py-2.5 px-4 rounded-xl border-0 text-sm font-semibold bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors duration-200 cursor-pointer;
+    }
+
+    /* Form animations */
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .candidate-form {
+        animation: slideIn 0.3s ease-out;
+    }
+
+    /* Progress bar animation */
+    #progress-bar {
+        transition: width 0.4s ease-in-out;
+    }
+
+    /* Form validation styles */
+    .invalid-feedback {
+        animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    }
+
+    @keyframes shake {
+        10%, 90% { transform: translateX(-1px); }
+        20%, 80% { transform: translateX(2px); }
+        30%, 50%, 70% { transform: translateX(-4px); }
+        40%, 60% { transform: translateX(4px); }
+    }
+
+    /* Base form styling */
+    .form-group {
+        @apply mb-4;
+    }
+
+    .form-group label {
+        @apply block text-sm font-medium text-gray-700 mb-1;
+    }
+
+    /* Input fields styling */
+    .textinput, 
+    .datetimeinput,
+    .numberinput,
+    select,
+    textarea {
+        @apply block w-full px-4 py-3 rounded-xl border border-gray-300 shadow-sm
+               focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+               transition-all duration-200
+               bg-white text-gray-900 placeholder-gray-400;
+    }
+
+    /* Textarea specific styling */
+    textarea {
+        @apply min-h-[120px] resize-y;
+    }
+
+    /* Checkbox styling */
+    .checkboxinput {
+        @apply h-5 w-5 rounded border-gray-300 text-blue-600 
+               focus:ring-blue-500 transition-colors duration-200
+               cursor-pointer;
+    }
+
+    /* Checkbox label */
+    .boolean-field label {
+        @apply flex items-center space-x-3 cursor-pointer select-none;
+    }
+
+    /* Select field styling */
+    select {
+        @apply appearance-none bg-no-repeat bg-right pr-10;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236B7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+        background-size: 1.5em 1.5em;
+    }
+
+    /* Date/time input specific styling */
+    .datetimeinput {
+        @apply cursor-pointer hover:border-blue-400;
+    }
+
+    /* Form field focus states */
+    .textinput:focus,
+    .datetimeinput:focus,
+    .numberinput:focus,
+    select:focus,
+    textarea:focus {
+        @apply ring-2 ring-blue-500 border-blue-500 outline-none;
+    }
+
+    /* Form field hover states */
+    .textinput:hover:not(:focus),
+    .datetimeinput:hover:not(:focus),
+    .numberinput:hover:not(:focus),
+    select:hover:not(:focus),
+    textarea:hover:not(:focus) {
+        @apply border-gray-400;
+    }
+
+    /* Form group title styling */
+    .form-group > label {
+        @apply text-sm font-semibold text-gray-700 mb-2;
+    }
+
+    /* Help text styling */
+    .help-text {
+        @apply mt-1 text-sm text-gray-500;
+    }
+}
 </style>
 {% endblock %}

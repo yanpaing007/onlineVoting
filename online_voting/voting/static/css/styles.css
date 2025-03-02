@@ -1,0 +1,136 @@
+.event-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.event-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+
+.category-tag {
+    transition: background-color 0.2s ease-in-out;
+}
+
+.category-tag:hover {
+    background-color: #e2e8f0 !important;
+}
+
+.favorite-button {
+    transition: transform 0.2s ease-in-out;
+}
+
+.favorite-button:hover {
+    transform: scale(1.1);
+}
+
+.favorite-button.active {
+    color: #fbbf24;
+}
+
+.search-input {
+    transition: box-shadow 0.2s ease-in-out;
+}
+
+.search-input:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.category-select {
+    transition: border-color 0.2s ease-in-out;
+}
+
+.category-select:focus {
+    border-color: #3b82f6;
+}
+
+/* Loading animation for event cards */
+.event-card-skeleton {
+    background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Filter animations and styles */
+.filters-container {
+    transition: opacity 0.3s ease-in-out;
+}
+
+.filters-container.loading {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.status-select, .sort-select {
+    transition: border-color 0.2s ease-in-out;
+}
+
+.status-select:focus, .sort-select:focus {
+    border-color: #3b82f6;
+}
+
+/* Status badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    transition: transform 0.2s ease;
+}
+
+.status-badge:hover {
+    transform: translateY(-1px);
+}
+
+.status-badge.ongoing {
+    background-color: #dcfce7;
+    color: #15803d;
+}
+
+.status-badge.upcoming {
+    background-color: #dbeafe;
+    color: #1d4ed8;
+}
+
+.status-badge.ended {
+    background-color: #fee2e2;
+    color: #b91c1c;
+}
+
+/* Filter select styles */
+.filter-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+}
+
+/* Transitions for filter changes */
+.events-grid {
+    transition: opacity 0.3s ease-in-out;
+}
+
+.events-grid.loading {
+    opacity: 0.5;
+}

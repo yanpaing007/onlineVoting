@@ -3,3 +3,4 @@ crispy-bootstrap5
 django
 pytz
 Pillow
+django-tailwind==3.8.0

@@ -4,6 +4,7 @@ from django.shortcuts import render, redirect
 from django.views import View
 from .utils import get_event_status
 from ..forms import RegisterForm
+from ..models import Profile
 
 
 class RegistrationView(View):
@@ -22,8 +23,16 @@ class RegistrationView(View):
     def post(self, request):
         form = self.form_class(request.POST)
         if form.is_valid():
-            form.save()
-            messages.success(request, "Registration Successful!")
+            user = form.save(commit=False)
+            # Store name in the first_name field
+            user.first_name = form.cleaned_data['name']
+            user.save()
+            
+            # Create a profile for the user
+            profile = Profile(user=user)
+            profile.save()
+            
+            messages.success(request, "Registration Successful! You can now log in.")
             return redirect("login")  # Redirect to login after successful registration
         return render(request, self.template_name, {"form": form})
 

@@ -1,46 +1,80 @@
-{% extends 'voting/base.html' %} 
-{% block content %} 
+{% extends 'voting/base.html' %}
 
-<h2>Search results for {{ query }}</h2>
-
-
-{% if results %}
-  <div class="row">
-    {% for event in results %}
-    <div class="col-md-6 mb-4">
-        <div class="card shadow-sm">
-            <div class="card-header bg-dark text-white">
-                <h5 class="card-title mb-0">
-                    <a href="{% url 'voting:event_detail_by_id' event_id=event.id %}" class="text-decoration-none text-white">
-                        {{ event.event_name }}
-                    </a>
-                </h5>
-            </div>
-            <div class="card-body">
-                <p class="card-text text-muted">
-                    <i class="bi bi-person"></i> Created By: {{ event.created_by.username }}
-                </p>
-                <p class="card-text text-muted">
-                    <i class="bi bi-calendar"></i> Starts: {{ event.start_time|date:"M d, Y H:i" }}
-                </p>
-                <div>
-                    {% for category in event.categories.all %}
-                    <span class="badge rounded-pill bg-secondary">{{ category.name }}</span>
-                    {% endfor %}
-                </div>
-            </div>
-            <div class="card-footer text-muted">
-                <a href="{% url 'voting:event_detail_by_id' event_id=event.id %}" class="btn btn-outline-primary btn-sm">View Details</a>
-            </div>
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="mb-8">
+        <div class="flex items-center space-x-4">
+            <h2 class="text-2xl font-bold text-gray-900">Search Results</h2>
+            <span class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-full">
+                "{{ query }}"
+            </span>
         </div>
     </div>
-    {% empty %}
-        <div class="col-12">
-            <div class="alert alert-info text-center">
-                Results not found.
+
+    {% if results %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for event in results %}
+        <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+            <div class="px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700">
+                <h3 class="text-lg font-semibold text-white truncate">
+                    <a href="{% url 'voting:event_detail_by_id' event_id=event.id %}" 
+                       class="hover:text-blue-100">
+                        {{ event.event_name }}
+                    </a>
+                </h3>
+            </div>
+            
+            <div class="p-6">
+                <div class="space-y-4">
+                    <div class="flex items-center text-gray-600">
+                        <i class="fas fa-user w-5"></i>
+                        <span class="ml-2">{{ event.created_by.username }}</span>
+                    </div>
+                    
+                    <div class="flex items-center text-gray-600">
+                        <i class="fas fa-calendar-alt w-5"></i>
+                        <span class="ml-2">{{ event.start_time|date:"M d, Y H:i" }}</span>
+                    </div>
+
+                    {% if event.categories.all %}
+                    <div class="flex flex-wrap gap-2">
+                        {% for category in event.categories.all %}
+                        <span class="px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded-full">
+                            {{ category.name }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div class="pt-4">
+                        <a href="{% url 'voting:event_detail_by_id' event_id=event.id %}"
+                           class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                            <span>View Details</span>
+                            <i class="fas fa-arrow-right ml-2"></i>
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
-    {% endfor %}
-{% endif %}
-
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white rounded-xl shadow-md p-8 text-center">
+        <div class="mb-4">
+            <i class="fas fa-search text-gray-400 text-4xl"></i>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">No results found</h3>
+        <p class="text-gray-500">
+            We couldn't find any events matching "{{ query }}". Try searching with different keywords.
+        </p>
+        <div class="mt-6">
+            <a href="{% url 'voting:event_list' %}" 
+               class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Back to Events
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
 {% endblock %}

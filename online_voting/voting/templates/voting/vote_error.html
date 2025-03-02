@@ -1,12 +1,61 @@
 <!-- voting/templates/voting/vote_error.html -->
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Vote Error</title>
-</head>
-<body>
-    <h1>Error</h1>
-    <p>{{ error }}</p>
-    <a href="{% url 'voting:event_list' %}">Back to Event List</a>
-</body>
-</html>
+{% extends 'voting/base.html' %}
+{% block title %}Voting Error{% endblock %}
+
+{% block content %}
+<div class="min-h-[80vh] flex items-center justify-center">
+    <div class="max-w-lg w-full text-center px-4">
+        <!-- Error Illustration -->
+        <div class="mb-8">
+            <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-red-100 mb-4">
+                <i class="fas fa-exclamation-circle text-5xl text-red-600"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-900 mb-4">Voting Error</h1>
+            <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+                <p class="text-red-700">{{ error_message }}</p>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <a href="{% url 'voting:event_list' %}" 
+               class="inline-flex items-center px-6 py-3 border border-transparent rounded-lg
+                      text-base font-medium text-white bg-blue-600 hover:bg-blue-700 
+                      focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
+                      transition-all duration-200 w-full sm:w-auto justify-center">
+                <i class="fas fa-home mr-2"></i>
+                Back to Home
+            </a>
+            <button onclick="history.back()" 
+                    class="inline-flex items-center px-6 py-3 border border-gray-300 rounded-lg
+                           text-base font-medium text-gray-700 bg-white hover:bg-gray-50 
+                           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
+                           transition-all duration-200 w-full sm:w-auto justify-center">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Go Back
+            </button>
+        </div>
+
+        <!-- Help Section -->
+        <div class="mt-12">
+            <div class="bg-gray-50 rounded-lg p-6">
+                <h3 class="text-sm font-medium text-gray-900 mb-4">Common Solutions</h3>
+                <ul class="space-y-3 text-sm text-gray-600 text-left">
+                    <li class="flex items-start">
+                        <i class="fas fa-clock mt-1 w-5 text-gray-400"></i>
+                        <span class="ml-2">Check if the voting event is still active</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-user-check mt-1 w-5 text-gray-400"></i>
+                        <span class="ml-2">Verify that you haven't already voted in this event</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-link mt-1 w-5 text-gray-400"></i>
+                        <span class="ml-2">Make sure you're using a valid voting link</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
