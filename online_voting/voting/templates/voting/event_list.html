@@ -5,20 +5,6 @@
 {% block content %}
 <h2>Events in {{ selected_category.name }}</h2>
 
-<!-- {% if events %}
-    <ul class="list-group">
-        {% for event in events %}
-            <li class="list-group-item">
-                <a href="{% url 'voting:event_detail_by_id' event_id=event.id %}">
-                    {{ event.event_name }}
-                </a>
-            </li>
-        {% endfor %}
-    </ul>
-{% else %}
-    <p>No events available in this category.</p>
-{% endif %} -->
-
 {% if events %}
 <div class="row">
     {% for event in events %}
@@ -36,7 +22,7 @@
                     <i class="bi bi-person"></i> Created By: {{ event.created_by.username }}
                 </p>
                 <p class="card-text text-muted">
-                    <i class="bi bi-calendar"></i> Starts: {{ event.start_time|date:"M d, Y H:i" }}
+                    <i class="bi bi-calendar"></i> Starts: {{ event.start_time|date:"Y-m-d H:i" }}
                 </p>
                 <div>
                     {% for category in event.categories.all %}

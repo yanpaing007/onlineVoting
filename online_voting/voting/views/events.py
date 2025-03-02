@@ -2,10 +2,15 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.forms import modelformset_factory, ValidationError
 from django.shortcuts import render, redirect, get_object_or_404
+from django.utils import timezone
+from zoneinfo import ZoneInfo
+from django.http import Http404
+from datetime import timedelta
+import pytz
+
 from ..models import VotingEvent, Candidate, Category, Favorite, Vote
 from ..forms import VotingEventForm, CandidateForm
-from .utils import DatetimeFormatter, get_event_status, generate_unique_token, events_in_user_time
-from django.utils import timezone
+from .utils import DateTimeFormatter, get_event_status, generate_unique_token, events_in_user_time
 
 
 @login_required
@@ -14,121 +19,136 @@ def create_event(request):
     
     if request.method == "POST":
         event_form = VotingEventForm(request.POST)
-       
         candidate_formset = CandidateFormSet(request.POST, request.FILES)
-        print(event_form.is_valid())
         
         if event_form.is_valid() and candidate_formset.is_valid():
-            # Ensure at least two candidates are provided
             if candidate_formset.total_form_count() < 2:
-                candidate_formset._non_form_errors.append(
-                    ValidationError("* You must add at least 2 candidates.")
-                )
+                messages.error(request, "* You must add at least 2 candidates.")
             else:
-                # Proceed with saving the event
-                voting_event = event_form.save(commit=False)
-                voting_event.created_by = request.user
+                try:
+                    # Create and save voting event with form data
+                    voting_event = event_form.save(commit=False)
+                    voting_event.created_by = request.user
+                    
+                    # Handle timezone conversions
+                    user_timezone = request.user.profile.timezone
+                    formatter = DateTimeFormatter(voting_event, user_timezone)
+                    voting_event = formatter.to_system_timezone()
+                    
+                    # Generate token for private events
+                    if voting_event.is_private:
+                        voting_event.event_token = generate_unique_token()
+                    
+                    # Save to database FIRST to get ID
+                    voting_event.save()
+                    
+                    # Save many-to-many relationships (categories)
+                    event_form.save_m2m()  # This handles categories automatically
 
-                # Get User Input Datetime and Timezone
-                voting_event.start_time = event_form.cleaned_data['start_time']
-                voting_event.end_time = event_form.cleaned_data['end_time']
-                user_timezone = request.user.profile.timezone
+                    # Save candidates
+                    for form in candidate_formset:
+                        if form.is_valid() and form.cleaned_data.get('name'):
+                            candidate = form.save(commit=False)
+                            candidate.voting_event = voting_event
+                            candidate.save()
 
-                # Format Datetime to user local time
-                formatter = DatetimeFormatter(voting_event, user_timezone)
-                voting_event = formatter.set_user_time()
-
-                # Convert user local time to system time (UTC)
-                formatter = DatetimeFormatter(voting_event)
-                voting_event = formatter.get_system_time()
-
-                if voting_event.is_private:
-                    voting_event.event_token = generate_unique_token()
-
-                # Save the voting event
-                voting_event.save()
-
-                # Assign categories to the voting event
-                selected_categories = event_form.cleaned_data["categories"]
-                voting_event.categories.set(selected_categories)
-
-                # Save each candidate related to the voting event
-                for form in candidate_formset:
-                    if form.is_valid() and form.cleaned_data.get('name'):
-                      candidate = form.save(commit=False)
-                      candidate.voting_event = voting_event
-                      candidate.save()
-
-                # Redirect to event detail page
-                return redirect("voting:event_detail_by_id", event_id=voting_event.id)
-        if candidate_formset.total_form_count() < 2:
-            messages.error(request, "* You must add at least 2 candidates.")
-        else:
-            messages.error(request, "Please correct the errors below.")
-            
-            
-    else:
-        event_form = VotingEventForm()
-        candidate_formset = CandidateFormSet(queryset=Candidate.objects.none())
-
-    return render(
-        request,
-        "voting/create_event.html",
-        {
+                    return redirect("voting:event_detail_by_id", event_id=voting_event.id)
+                
+                except RuntimeError as e:
+                    messages.error(request, str(e))
+        
+        return render(request, "voting/create_event.html", {
             "event_form": event_form,
             "candidate_formset": candidate_formset,
-        },
-    )
-
+        })
 
 
 def event_detail(request, event_id=None, event_token=None):
-    now = timezone.now()
-    total_seconds = 0
-
-    if event_id:
-        # Fetch VotingEvent by event_id
-        voting_event = get_object_or_404(VotingEvent, id=event_id)
-
-    elif event_token != None:
-        # Fetch VotingEvent by event_token
-        voting_event = get_object_or_404(VotingEvent, event_token=event_token)
-      
-    is_favorited = Favorite.objects.filter(user=request.user, event=voting_event).exists()
-
+    voting_event = _get_event_or_404(event_id, event_token)
+    user_timezone = _get_user_timezone(request.user)
+    
+    # Convert event times to user's local timezone
+    formatter = DateTimeFormatter(voting_event, user_timezone)
+    local_event = formatter.to_user_timezone()
+    
+    context = _build_event_context(request, local_event, user_timezone)
+    
     if request.method == "POST" and 'favorite' in request.POST:
-        if is_favorited:
-            Favorite.objects.filter(user=request.user, event=voting_event).delete()
-        else:
-            Favorite.objects.create(user=request.user, event=voting_event)
-        return redirect('voting:event_detail_by_id', event_id=voting_event.id)
-
-      
-    candidates = voting_event.candidates.all()
-    user_vote = Vote.objects.filter(voting_event=voting_event, voter=request.user).first()
-    voted_candidate = user_vote.candidate if user_vote else None
-
-    status = get_event_status(voting_event, now)
-    if status == 'upcoming':
-        time_remaining = voting_event.start_time - now
-        total_seconds = int(time_remaining.total_seconds())
-    elif status == 'ongoing':
-        time_remaining = voting_event.end_time - now
-        total_seconds = int(time_remaining.total_seconds())
-
-    context = {
-        "event": voting_event,
-        "candidates": candidates,
-        "voted_candidate": voted_candidate,
-        "status": status,  # Ensure this is a string value
-        "total_seconds": total_seconds,
-        'is_favorited': is_favorited,
-    }
+        return _handle_favorite_toggle(request, voting_event)
+    
     return render(request, "voting/event_detail.html", context)
+
+# Helper functions
+def _get_event_or_404(event_id, event_token):
+    """Retrieve event by ID or token"""
+    if event_id:
+        return get_object_or_404(VotingEvent, id=event_id)
+    if event_token:
+        return get_object_or_404(VotingEvent, event_token=event_token)
+    raise Http404("No event specified")
+
+def _get_user_timezone(user):
+    """Get user's timezone with fallback to UTC"""
+    if user.is_authenticated and hasattr(user, 'profile'):
+        return user.profile.timezone
+    return 'UTC'
+
+def _build_event_context(request, event, user_timezone):
+    """Construct context with localized datetime"""
+    now = timezone.localtime(timezone.now(), timezone=_get_tz_object(user_timezone))
+    
+    status, total_seconds = _calculate_event_status_and_time(event, now)
+    
+    return {
+        "event": event,
+        "candidates": event.candidates.all(),
+        "voted_candidate": _get_user_vote(request.user, event),
+        "status": status,
+        "total_seconds": total_seconds,
+        'is_favorited': _is_event_favorited(request.user, event),
+    }
+
+def _get_tz_object(timezone_str):
+    """Get timezone object from string"""
+    return ZoneInfo(timezone_str) if ZoneInfo else pytz.timezone(timezone_str)
+
+def _calculate_event_status_and_time(event, reference_time):
+    """Calculate status and remaining time based on localized datetimes"""
+    status = get_event_status(event, reference_time)
+    
+    if status == 'upcoming':
+        delta = event.start_time - reference_time
+    elif status == 'ongoing':
+        delta = event.end_time - reference_time
+    else:
+        delta = timedelta(0)
+    
+    return status, int(delta.total_seconds())
+
+def _get_user_vote(user, event):
+    """Get user's vote candidate if exists"""
+    if not user.is_authenticated:
+        return None
+    vote = Vote.objects.filter(voting_event=event, voter=user).first()
+    return vote.candidate if vote else None
+
+def _is_event_favorited(user, event):
+    """Check if event is favorited by user"""
+    return user.is_authenticated and Favorite.objects.filter(
+        user=user, event=event
+    ).exists()
+
+def _handle_favorite_toggle(request, event):
+    """Toggle favorite status and redirect"""
+    if _is_event_favorited(request.user, event):
+        Favorite.objects.filter(user=request.user, event=event).delete()
+    else:
+        Favorite.objects.create(user=request.user, event=event)
+    return redirect('voting:event_detail_by_id', event_id=event.id)
 
 
 def event_list(request):
-    now = timezone.now()
+    now = timezone.localtime()
     categories = Category.objects.all()
     category_colors = {
         'Music': '#ff5733',  # Example color
@@ -149,11 +169,13 @@ def event_list(request):
     upcoming = all_events.filter(start_time__gt=now)
     previous = all_events.filter(end_time__lt=now)
 
+    user_timezone = request.user.profile.timezone if request.user.is_authenticated else 'UTC'
+
     context = {
-        "ongoing_events": ongoing,
-        "upcoming_events": upcoming,
-        "previous_events": previous,
-        "categories": categories,
+        "ongoing_events": events_in_user_time(ongoing, user_timezone),
+        "upcoming_events": events_in_user_time(upcoming, user_timezone),
+        "previous_events": events_in_user_time(previous, user_timezone),
+        # ... rest of context ...
     }
 
     return render(request, "voting/home.html", context)
