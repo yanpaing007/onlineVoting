@@ -5,8 +5,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Count
 from ..models import VotingEvent, Candidate, Category, Favorite, Vote
 from ..forms import VotingEventForm, CandidateForm
-from .utils import DatetimeFormatter, get_event_status, generate_unique_token, events_in_user_time
-from django.utils import timezone
+from .utils import DateTimeFormatter, get_event_status, generate_unique_token, events_in_user_time
 
 
 @login_required
@@ -15,50 +14,38 @@ def create_event(request):
     
     if request.method == "POST":
         event_form = VotingEventForm(request.POST)
-       
         candidate_formset = CandidateFormSet(request.POST, request.FILES)
-        print(event_form.is_valid())
         
         if event_form.is_valid() and candidate_formset.is_valid():
-            # Ensure at least two candidates are provided
             if candidate_formset.total_form_count() < 2:
-                candidate_formset._non_form_errors.append(
-                    ValidationError("* You must add at least 2 candidates.")
-                )
+                messages.error(request, "* You must add at least 2 candidates.")
             else:
-                # Proceed with saving the event
-                voting_event = event_form.save(commit=False)
-                voting_event.created_by = request.user
+                try:
+                    # Create and save voting event with form data
+                    voting_event = event_form.save(commit=False)
+                    voting_event.created_by = request.user
+                    
+                    # Handle timezone conversions
+                    user_timezone = request.user.profile.timezone
+                    formatter = DateTimeFormatter(voting_event, user_timezone)
+                    voting_event = formatter.to_system_timezone()
+                    
+                    # Generate token for private events
+                    if voting_event.is_private:
+                        voting_event.event_token = generate_unique_token()
+                    
+                    # Save to database FIRST to get ID
+                    voting_event.save()
+                    
+                    # Save many-to-many relationships (categories)
+                    event_form.save_m2m()  # This handles categories automatically
 
-                # Get User Input Datetime and Timezone
-                voting_event.start_time = event_form.cleaned_data['start_time']
-                voting_event.end_time = event_form.cleaned_data['end_time']
-                user_timezone = request.user.profile.timezone
-
-                # Format Datetime to user local time
-                formatter = DatetimeFormatter(voting_event, user_timezone)
-                voting_event = formatter.set_user_time()
-
-                # Convert user local time to system time (UTC)
-                formatter = DatetimeFormatter(voting_event)
-                voting_event = formatter.get_system_time()
-
-                if voting_event.is_private:
-                    voting_event.event_token = generate_unique_token()
-
-                # Save the voting event
-                voting_event.save()
-
-                # Assign categories to the voting event
-                selected_categories = event_form.cleaned_data["categories"]
-                voting_event.categories.set(selected_categories)
-
-                # Save each candidate related to the voting event
-                for form in candidate_formset:
-                    if form.is_valid() and form.cleaned_data.get('name'):
-                      candidate = form.save(commit=False)
-                      candidate.voting_event = voting_event
-                      candidate.save()
+                    # Save candidates
+                    for form in candidate_formset:
+                        if form.is_valid() and form.cleaned_data.get('name'):
+                            candidate = form.save(commit=False)
+                            candidate.voting_event = voting_event
+                            candidate.save()
 
                 # Redirect to event detail page
                 return redirect("voting:event_detail_by_id", event_id=voting_event.id)
