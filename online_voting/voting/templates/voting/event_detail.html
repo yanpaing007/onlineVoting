@@ -1,136 +1,136 @@
 {% extends 'voting/base.html' %}
 
 {% block content %}
-<div>
-    <h2>{{ event.event_name }}</h2>
-</div>
+<div class="max-w-7xl mx-auto">
+    <div class="bg-white rounded-xl shadow-md overflow-hidden mb-6">
+        <div class="p-6">
+            <div class="flex justify-between items-start">
+                <h2 class="text-3xl font-bold text-gray-900">{{ event.event_name }}</h2>
+                <form method="post" class="flex-shrink-0">
+                    {% csrf_token %}
+                    <button type="submit" name="favorite" 
+                            class="inline-flex items-center px-4 py-2 rounded-lg {% if is_favorited %}bg-yellow-100 text-yellow-700 hover:bg-yellow-200{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %} transition-colors duration-200">
+                        <i class="fas {% if is_favorited %}fa-star{% else %}fa-star{% endif %} mr-2"></i>
+                        {% if is_favorited %}Unfavorite{% else %}Add to Favorites{% endif %}
+                    </button>
+                </form>
+            </div>
 
-<form method="post">
-    {% csrf_token %}
-    <button type="submit" name="favorite" class="btn btn-warning mb-3">
-        {% if is_favorited %}
-            <i class="bi bi-star-fill"></i> Unfavorite
-        {% else %}
-            <i class="bi bi-star"></i> Add to Favorites
-        {% endif %}
-    </button>
-</form>
+            <div class="mt-6 space-y-4">
+                <div class="flex items-center">
+                    <span class="w-32 text-gray-600 font-medium">Event Status:</span>
+                    <span class="{% if status == 'ended' %}text-red-600{% elif status == 'ongoing' %}text-green-600{% else %}text-blue-600{% endif %} font-medium">
+                        {{ status|title }}
+                    </span>
+                </div>
 
-<div class="container">
-    <div class="row">
-        <div class="col-sm-2">
-            <strong>Event Status:</strong>
+                {% if status == 'ongoing' or status == 'upcoming' %}
+                <div class="flex items-center">
+                    <span class="w-32 text-gray-600 font-medium" id="label">
+                        {% if status == 'ongoing' %}Event ends in:{% else %}Event starts in:{% endif %}
+                    </span>
+                    <span id="countdown" class="font-mono text-lg text-blue-600 font-medium"></span>
+                </div>
+                {% endif %}
+
+                {% if event.event_token %}
+                <div class="flex items-center">
+                    <span class="w-32 text-gray-600 font-medium">Invite Link:</span>
+                    <a href="http://127.0.0.1:8000/voting/event/token/{{ event.event_token }}" 
+                       class="text-blue-600 hover:text-blue-700 break-all" id="event_link">
+                        http://127.0.0.1:8000/voting/event/token/{{ event.event_token }}
+                    </a>
+                </div>
+                {% endif %}
+            </div>
         </div>
-        {% if status == 'ended' %}
-            <div class="col">
-                <p class="text-danger">This event has already ended.</p>
-            </div>
-        {% else %}
-            <div class="col">
-                <p>{{ status }}</p>
-            </div>
-        {% endif %}
     </div>
 
-    {% if status == 'ongoing' or status == 'upcoming' %}
-        <div class="row">
-            <div class="col-sm-2">
-                <strong id="label">
-                    {% if status == 'ongoing' %}
-                        Event ends in:
-                    {% else %}
-                        Event starts in:
+    <div class="mb-6">
+        <h3 class="text-2xl font-bold text-gray-900 mb-4">Candidates</h3>
+        <form action="{% url 'voting:vote' event.id %}" method="post">
+            {% csrf_token %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for candidate in candidates %}
+                <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 
+                           {% if candidate.id == voted_candidate.id %}ring-2 ring-green-500{% endif %}">
+                    {% if candidate.profile_pic %}
+                    <div class="aspect-w-16 aspect-h-9">
+                        <img src="{{ candidate.profile_pic.url }}" 
+                             class="object-cover w-full h-64"
+                             alt="{{ candidate.name }}" />
+                    </div>
                     {% endif %}
-                </strong>
-            </div>
-            <div class="col">
-                <p id="countdown"></p>
-            </div>
-        </div>
-    {% endif %}
-
-    {% if event.event_token %}
-        <div class="row mb-3">
-            <div class="col-sm-2">
-                <strong id="label">Voting invite Link:</strong>
-            </div>
-            <div class="col">
-                <a href="http://127.0.0.1:8000/voting/event/token/{{ event.event_token }}" id="event_link">
-                    http://127.0.0.1:8000/voting/event/token/{{ event.event_token }}
-                </a>
-            </div>
-        </div>
-    {% endif %}
-</div>
-
-<div>
-    <h3>Candidates</h3>
-</div>
-
-<div>
-    <form action="{% url 'voting:vote' event.id %}" method="post">
-        {% csrf_token %}
-        <div class="row mt-3 rounded-10">
-            <div class="col-12">
-                <div class="d-flex flex-wrap overflow-auto" style="max-height: 600px; overflow-y: auto;">
-                    {% for candidate in candidates %}
-                        <div class="col-md-4 mb-3 p-2">
-                            <div class="card {% if candidate.id == voted_candidate.id %}border border-success{% endif %}" style="min-width: 250px;">
-                                {% if candidate.profile_pic %}
-                                    <img src="{{ candidate.profile_pic.url }}" class="card-img-top img-fluid" style="
-                                        width: auto;
-                                        height: 300px;
-                                        object-fit: cover;
-                                        padding: 10px;
-                                        border: none;
-                                        border-radius: 20px;"
-                                        alt="{{ candidate.name }}" />
-                                {% endif %}
-                                <div class="card-body">
-                                    <h5 class="card-title text-bold">{{ candidate.name }}</h5>
-                                    <p class="card-text text-muted" style="max-height: 200px; overflow-y: auto;">
-                                        {{ candidate.description }}
-                                    </p>
-                                    <br>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" id="candidate_{{ candidate.id }}" name="candidate" value="{{ candidate.id }}" />
-                                        <label class="form-check-label" for="candidate_{{ candidate.id }}"><b>Vote</b></label>
-                                    </div>
-                                </div>
-                            </div>
+                    <div class="p-6">
+                        <h4 class="text-xl font-semibold text-gray-900 mb-2">{{ candidate.name }}</h4>
+                        <div class="h-24 overflow-y-auto text-gray-600 mb-4">
+                            {{ candidate.description }}
                         </div>
-                    {% endfor %}
+                        <div class="flex items-center space-x-2">
+                            <input type="radio" 
+                                   id="candidate_{{ candidate.id }}" 
+                                   name="candidate" 
+                                   value="{{ candidate.id }}"
+                                   class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                            <label for="candidate_{{ candidate.id }}" 
+                                   class="text-sm font-medium text-gray-700">Vote for this candidate</label>
+                        </div>
+                    </div>
                 </div>
+                {% endfor %}
             </div>
-        </div>
-        <div class="form-group form-check mt-3">
-            <input type="checkbox" class="form-check-input" id="anonymousVote" name="anonymousVote" {% if voted_candidate %}checked{% endif %}>
-            <label class="form-check-label text-bold" for="anonymousVote">Vote anonymously</label>
-        </div>
-        {% if status == 'ongoing' %}
-            <button type="submit" class="btn btn-primary mt-4">Cast Your Vote</button>
-            <a href="{% url 'voting:vote_result' event_id=event.id %}">
-                <button type="button" class="btn btn-success mt-4">View Result</button>
-            </a>
-        {% elif status == 'upcoming' %}
-            <button type="submit" class="btn btn-primary mt-4 disabled">Cast Your Vote</button>
-            <a href="{% url 'voting:vote_result' event_id=event.id %}">
-                <button type="button" class="btn btn-success mt-4 disabled">View Result</button>
-            </a>
-        {% elif status == 'ended' %}
-            <button type="submit" class="btn btn-primary mt-4 disabled">Cast Your Vote</button>
-            <a href="{% url 'voting:vote_result' event_id=event.id %}">
-                <button type="button" class="btn btn-success mt-4">View Result</button>
-            </a>
-        {% endif %}
-    </form>
-</div>
 
+            <div class="mt-6 flex items-center">
+                <input type="checkbox" 
+                       id="anonymousVote" 
+                       name="anonymousVote" 
+                       {% if voted_candidate %}checked{% endif %}
+                       class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                <label for="anonymousVote" class="ml-2 text-sm font-medium text-gray-700">
+                    Vote anonymously
+                </label>
+            </div>
+
+            <div class="mt-6 flex space-x-4">
+                {% if status == 'ongoing' %}
+                    <button type="submit" 
+                            class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
+                        Cast Your Vote
+                    </button>
+                    <a href="{% url 'voting:vote_result' event_id=event.id %}"
+                       class="inline-flex px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors">
+                        View Result
+                    </a>
+                {% elif status == 'upcoming' %}
+                    <button type="submit" disabled
+                            class="px-6 py-3 bg-gray-400 text-white rounded-lg cursor-not-allowed">
+                        Cast Your Vote
+                    </button>
+                    <button type="button" disabled
+                            class="px-6 py-3 bg-gray-400 text-white rounded-lg cursor-not-allowed">
+                        View Result
+                    </button>
+                {% elif status == 'ended' %}
+                    <button type="submit" disabled
+                            class="px-6 py-3 bg-gray-400 text-white rounded-lg cursor-not-allowed">
+                        Cast Your Vote
+                    </button>
+                    <a href="{% url 'voting:vote_result' event_id=event.id %}"
+                       class="inline-flex px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors">
+                        View Result
+                    </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    let totalSeconds = {{total_seconds}}; // This is not an error.
+    let totalSeconds = {{total_seconds}};
+    let hasReloaded = false;
+    
     function startCountdown() {
         const countdownElement = document.getElementById('countdown');
         const interval = setInterval(function() {
@@ -142,15 +142,23 @@
                 }
             } 
             else {
-                const days = Math.floor(totalSeconds / 86400)
+                const days = Math.floor(totalSeconds / 86400);
                 const hours = Math.floor((totalSeconds % 86400) / 3600);
                 const minutes = Math.floor((totalSeconds % 3600) / 60);
                 const seconds = totalSeconds % 60;
-                countdownElement.innerHTML = `${days}d ${hours}h ${minutes}m ${seconds}s`;               
+                
+                const parts = [];
+                if (days > 0) parts.push(`${days}d`);
+                if (hours > 0) parts.push(`${hours}h`);
+                if (minutes > 0) parts.push(`${minutes}m`);
+                parts.push(`${seconds}s`);
+                
+                countdownElement.innerHTML = parts.join(' ');
                 totalSeconds--;
             }
-        }, 1000); // 1 second interval.
+        }, 1000);
     }
+    
     startCountdown();
 </script>
-{% endblock%}
+{% endblock %}

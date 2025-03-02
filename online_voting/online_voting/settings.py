@@ -53,7 +53,11 @@ INSTALLED_APPS = [
     'voting',
     'crispy_forms',
     'crispy_bootstrap5',
+    'tailwind',
 ]
+
+TAILWIND_APP_NAME = 'theme'
+NPM_BIN_PATH = '/usr/local/bin/npm'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
