@@ -1,0 +1,195 @@
+{% extends 'voting/base.html' %}
+{% block title %}{{ category.name }} - Events{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Header Section -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden mb-6">
+        <div class="p-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
+                        <i class="fas {% if category.icon %}{{ category.icon }}{% else %}fa-folder{% endif %} text-2xl text-blue-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h1 class="text-2xl font-bold text-gray-900">{{ category.name }}</h1>
+                        {% if category.description %}
+                        <p class="text-gray-600 mt-1">{{ category.description }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <a href="{% url 'voting:category_list' %}" 
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg
+                          text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 
+                          focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
+                          transition-colors">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Back to Categories
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Total Events</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ events|length }}</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                    <i class="fas fa-calendar text-blue-600"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Active Events</p>
+                    <p class="text-2xl font-semibold text-green-600">
+                        {{ active_events|length }}
+                    </p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                    <i class="fas fa-check-circle text-green-600"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Total Votes</p>
+                    <p class="text-2xl font-semibold text-purple-600">{{ total_votes }}</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+                    <i class="fas fa-vote-yea text-purple-600"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event List -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Events in this Category</h2>
+        </div>
+        
+        <div class="divide-y divide-gray-200">
+            {% for event in events %}
+            <div class="p-6 hover:bg-gray-50 transition-colors">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center">
+                            <h3 class="text-lg font-semibold text-gray-900">
+                                <a href="{% url 'voting:event_detail_by_id' event.id %}" 
+                                   class="hover:text-blue-600 transition-colors">
+                                    {{ event.event_name }}
+                                </a>
+                            </h3>
+                            <span class="ml-3 px-3 py-1 text-xs font-medium {% if event.status == 'ongoing' %}bg-green-100 text-green-800{% elif event.status == 'upcoming' %}bg-blue-100 text-blue-800{% else %}bg-gray-100 text-gray-800{% endif %} rounded-full">
+                                {{ event.status|title }}
+                            </span>
+                        </div>
+                        
+                        <div class="mt-2 flex items-center text-sm text-gray-500">
+                            <div class="flex items-center mr-6">
+                                <i class="fas fa-clock w-4 mr-1"></i>
+                                <span>{{ event.start_time|date:"M d, Y H:i" }}</span>
+                            </div>
+                            <div class="flex items-center mr-6">
+                                <i class="fas fa-user w-4 mr-1"></i>
+                                <span>{{ event.created_by.username }}</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-users w-4 mr-1"></i>
+                                <span>{{ event.vote_set.count }} votes</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="ml-4 flex-shrink-0">
+                        <a href="{% url 'voting:event_detail_by_id' event.id %}" 
+                           class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg
+                                  text-sm font-medium text-gray-700 bg-white hover:bg-gray-50
+                                  focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
+                                  transition-colors">
+                            View Details
+                            <i class="fas fa-arrow-right ml-2"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="p-8 text-center">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
+                    <i class="fas fa-calendar-times text-2xl text-gray-400"></i>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">No Events Found</h3>
+                <p class="text-gray-600">There are no events in this category yet.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% if is_paginated %}
+    <div class="mt-6 flex items-center justify-between">
+        <div class="flex-1 flex justify-between sm:hidden">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}" 
+               class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                Previous
+            </a>
+            {% endif %}
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" 
+               class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                Next
+            </a>
+            {% endif %}
+        </div>
+        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+                <p class="text-sm text-gray-700">
+                    Showing
+                    <span class="font-medium">{{ page_obj.start_index }}</span>
+                    to
+                    <span class="font-medium">{{ page_obj.end_index }}</span>
+                    of
+                    <span class="font-medium">{{ page_obj.paginator.count }}</span>
+                    results
+                </p>
+            </div>
+            <div>
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}" 
+                       class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <span class="sr-only">Previous</span>
+                        <i class="fas fa-chevron-left w-5 h-5"></i>
+                    </a>
+                    {% endif %}
+
+                    {% for i in paginator.page_range %}
+                    <a href="?page={{ i }}" 
+                       class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium {% if page_obj.number == i %}text-blue-600 bg-blue-50{% else %}text-gray-700 hover:bg-gray-50{% endif %}">
+                        {{ i }}
+                    </a>
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}" 
+                       class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <span class="sr-only">Next</span>
+                        <i class="fas fa-chevron-right w-5 h-5"></i>
+                    </a>
+                    {% endif %}
+                </nav>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
