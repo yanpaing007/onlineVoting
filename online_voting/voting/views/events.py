@@ -7,6 +7,7 @@ from ..forms import VotingEventForm, CandidateForm
 from .utils import DatetimeFormatter, get_event_status, generate_unique_token, events_in_user_time
 from django.utils import timezone
 
+
 @login_required
 def create_event(request):
     CandidateFormSet = modelformset_factory(Candidate, form=CandidateForm, extra=0)
