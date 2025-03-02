@@ -56,7 +56,7 @@
                 <!-- Navigation links -->
                 <nav class="px-4 py-6 space-y-2">
                     <a href="{% url 'home' %}" class="flex items-center px-4 py-3 text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors">
-                        <i class="fas fa-home w-5 h-5 mr-3"></i>
+                        <i lass="fas fa-home w-5 h-5 mr-3"></i>
                         <span>Home</span>
                     </a>
                     <a href="{% url 'event_list' %}" class="flex items-center px-4 py-3 text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors">
@@ -128,7 +128,7 @@
             <div class="fixed bottom-4 right-4 z-50">
                 {% for message in messages %}
                 <div class="{% if message.tags == 'alert-success' %}bg-green-500{% else %}bg-red-500{% endif %} 
-                    text-white px-6 py-3 rounded-lg shadow-lg mb-2 transition-all transform duration-500 errorM">
+                    text-white px-6 py-3 rounded-lg shado-lg mb-2 transition-all transform duration-500 errorM">
                     {{ message }}
                 </div>
                 {% endfor %}

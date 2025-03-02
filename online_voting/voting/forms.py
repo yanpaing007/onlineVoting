@@ -1,33 +1,95 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
-
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Field, HTML, Div, Submit
 from .models import *
 
 
 class VotingEventForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Div(
+                Field('event_name', css_class='textinput'),
+                css_class='col-span-2'
+            ),
+            Div(
+                Field('start_time', css_class='datetimeinput'),
+                Field('end_time', css_class='datetimeinput'),
+                css_class='grid grid-cols-1 md:grid-cols-2 gap-6'
+            ),
+            Div(
+                Field('categories', template='voting/custom_checkbox_select.html'),
+                css_class='col-span-2 space-y-2'
+            ),
+            Div(
+                Field('candidate_numbers', css_class='numberinput'),
+                Field('is_private', template='voting/custom_checkbox.html'),
+                css_class='grid grid-cols-1 md:grid-cols-2 gap-6'
+            ),
+        )
+
     class Meta:
         model = VotingEvent
-        fields = ['event_name', 'start_time', 'end_time','categories', 'candidate_numbers', 'is_private']
+        fields = ['event_name', 'start_time', 'end_time', 'categories', 'candidate_numbers', 'is_private']
         widgets = {
-            'event_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'start_time': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
-            'end_time': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
-            'is_private': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'categories': forms.CheckboxSelectMultiple(),
-            'candidate_numbers': forms.NumberInput(attrs={'class': 'form-control'})
+            'event_name': forms.TextInput(attrs={
+                'class': 'textinput',
+                'placeholder': 'Enter event name'
+            }),
+            'start_time': forms.DateTimeInput(attrs={
+                'class': 'datetimeinput',
+                'type': 'datetime-local'
+            }),
+            'end_time': forms.DateTimeInput(attrs={
+                'class': 'datetimeinput',
+                'type': 'datetime-local'
+            }),
+            'is_private': forms.CheckboxInput(attrs={
+                'class': 'checkboxinput'
+            }),
+            'categories': forms.CheckboxSelectMultiple(attrs={
+                'class': 'checkboxinput'
+            }),
+            'candidate_numbers': forms.NumberInput(attrs={
+                'class': 'numberinput',
+                'min': '2',
+                'placeholder': 'Minimum 2 candidates'
+            })
         }
 
 
 class CandidateForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Field('name', css_class='textinput'),
+            Field('description', css_class='textarea'),
+            Field('profile_pic', css_class='fileinput'),
+        )
+
     class Meta:
         model = Candidate
         fields = ['name', 'description', 'profile_pic']
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control'}),
-            'description': forms.Textarea(attrs={'class': 'form-control'}),
-            'profile_pic': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'name': forms.TextInput(attrs={
+                'class': 'textinput',
+                'placeholder': 'Enter candidate name'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'textarea',
+                'rows': 3,
+                'placeholder': 'Enter candidate description'
+            }),
+            'profile_pic': forms.FileInput(attrs={
+                'class': 'fileinput',
+                'accept': 'image/*'
+            }),
         }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['name'].required = True

@@ -1,0 +1,26 @@
+{% load crispy_forms_field %}
+
+<div class="space-y-3">
+    <label class="block text-sm font-medium text-gray-700">{{ field.label }}</label>
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        {% for choice in field.field.choices %}
+        <div class="relative flex items-start bg-white p-4 rounded-lg border border-gray-200 hover:border-blue-500 transition-colors duration-200">
+            <div class="flex h-5 items-center">
+                <input type="checkbox" name="{{ field.html_name }}" value="{{ choice.0 }}" 
+                       id="id_{{ field.html_name }}_{{ forloop.counter }}"
+                       class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                       {% if choice.0 in field.value|stringformat:"s" %}checked{% endif %}>
+            </div>
+            <div class="ml-3">
+                <label for="id_{{ field.html_name }}_{{ forloop.counter }}" 
+                       class="text-sm font-medium text-gray-700 cursor-pointer">
+                    {{ choice.1 }}
+                </label>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% if field.help_text %}
+    <p class="mt-2 text-sm text-gray-500">{{ field.help_text }}</p>
+    {% endif %}
+</div>
